@@ -1,6 +1,4 @@
 #zfs083squashed.patch
-#zfs083_from_hutter_repo.patch
-#zfs-083-hutter1.patch
 #sysctls-for-arc-min-max-ignored-at-runtime.patch
 0001-Prevent-manual-builds-in-the-DKMS-source.patch
 0002-Check-for-META-and-DCH-consistency-in-autoconf.patch
