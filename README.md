@@ -39,8 +39,8 @@ Please note, that scsi_debug kernel module is not present in Ubuntu 18.4 version
 
 # Forking the repo
 Fork and setup this repo for personal ZFS packages tailored to your needs in 5 easy steps:
- * create github secret GITHUB_PERSONAL_TOKEN containing github personal acess token, it is nesessary for pushing changes into gh-pages branch after succesfull build and test (for security reasons, github.token used by Gihtub Actions workflow does not trigger properly Ghihub Pages site rebuild after push to gh-pages branch).
+ * create github secret GITHUB_PERSONAL_TOKEN containing github personal acess token, it is nesessary for pushing changes into gh-pages branch after succesfull build and test (for security reasons, github.token used by Gihtub Actions workflow does not trigger properly Github Pages site rebuild after push to gh-pages branch).
  * either import your own or generate GPG key (it is used by github workflow to sign packages, read [here](https://help.github.com/en/github/authenticating-to-github/generating-a-new-gpg-key) on how to create gpg key, afterwards export public key into apt_pub.gpg file an commit changes into gh-pages branch
- * export as ASCII-armored your private GPG key into file, then create another githin secret GPG_KEY with the file contents
+ * export as ASCII-armored your private GPG key into file, then create another Github secret GPG_KEY with the file contents
  * create github secret GPG_PASS holding your password for the private key
  * edit ./index.html file within gh-pages branch to match your repo and info you want, it will hold your repo entry page, explaining details on how to use this repo
