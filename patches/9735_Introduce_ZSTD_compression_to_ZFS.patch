@@ -1,32 +1,39 @@
-From 54ec38b7df417068ae63470989932ddf5d8350a9 Mon Sep 17 00:00:00 2001
+From dc6eff73df17d2d9b927316d848cfa81eb626448 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Michael=20Niew=C3=B6hner?= <foss@mniewoehner.de>
 Date: Sun, 1 Dec 2019 01:28:44 +0100
-Subject: [PATCH 1/6] Import unmodified ZStandard v1.4.4
+Subject: [PATCH] This PR introduces ZSTD compression to ZFS.
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-This imports the unmodified ZStandard source to contrib/ which will be
-used by ZFS. This code shall not be modified in any way to keep it
-easily updatable.
-
-Only the required files from lib/ are imported.
-
-contrib/zstd is excluded from codecov calculation as dependencies don't
-need full codecov.
+Many thanks to:
+The original Proof of Concept by @allanjude see: #9024
+The Linux compatibility redesign by @BrainSlayer see: #8941
+Spin-off kvmem patch by @c0d3z3r0 see: #9034
+Spin-off test refactor by @Ornias1993 see: #9626
+Spin-off Code-coverage Ignore by @Ornias1993 see: #9726
+Additional testing, validation and review by @dan-and and @Ornias1993 see: Test suite
+Restructure and Refactor by @c0d3z3r0 and @BrainSlayer see: This PR
+PR description and documentation by @Ornias1993 see: This PR
 
 Co-authored-by: Allan Jude <allanjude@freebsd.org>
-Co-authored-by: Kjeld Schouten-Lebbing kjeld@schouten-lebbing.nl
+Co-authored-by: Sebastian Gottschall <s.gottschall@dd-wrt.com>
+Co-authored-by: Kjeld Schouten-Lebbing <kjeld@schouten-lebbing.nl>
 Co-authored-by: Michael Niewöhner <foss@mniewoehner.de>
 Signed-off-by: Allan Jude <allanjude@freebsd.org>
-Signed-off-by: Kjeld Schouten-Lebbing kjeld@schouten-lebbing.nl
+Signed-off-by: Sebastian Gottschall <s.gottschall@dd-wrt.com>
+Signed-off-by: Kjeld Schouten-Lebbing <kjeld@schouten-lebbing.nl>
 Signed-off-by: Michael Niewöhner <foss@mniewoehner.de>
 ---
  Makefile.am                                   |    3 +-
+ cmd/dbufstat/dbufstat                         |    2 +-
+ cmd/zdb/zdb.c                                 |    4 +-
  config/ax_code_coverage.m4                    |    2 +-
- configure.ac                                  |    4 +
+ configure.ac                                  |    7 +
  contrib/Makefile.am                           |    4 +-
+ contrib/zstd/.gitignore                       |    1 +
  contrib/zstd/Makefile.am                      |    2 +
+ contrib/zstd/README.md                        |   24 +
  contrib/zstd/THIRDPARTYLICENSE                |   30 +
  contrib/zstd/THIRDPARTYLICENSE.gplv2          |  339 ++
  contrib/zstd/common/Makefile.am               |    0
@@ -84,8 +91,62 @@ Signed-off-by: Michael Niewöhner <foss@mniewoehner.de>
  .../zstd/decompress/zstd_decompress_block.h   |   59 +
  .../decompress/zstd_decompress_internal.h     |  175 +
  contrib/zstd/zstd.h                           | 2049 ++++++++
- 62 files changed, 27570 insertions(+), 4 deletions(-)
+ copy-builtin                                  |   10 +-
+ include/sys/Makefile.am                       |    2 +-
+ include/sys/arc.h                             |   18 +-
+ include/sys/arc_impl.h                        |    3 +
+ include/sys/dmu_objset.h                      |    1 +
+ include/sys/fs/zfs.h                          |    1 +
+ include/sys/spa.h                             |   21 +-
+ include/sys/zfs_ioctl.h                       |    4 +-
+ include/sys/zio.h                             |   15 +-
+ include/sys/zio_compress.h                    |   82 +-
+ include/sys/zio_impl.h                        |    6 +-
+ include/sys/zstd/Makefile.am                  |   27 +
+ include/sys/zstd/limits.h                     |    6 +
+ include/sys/zstd/stddef.h                     |    2 +
+ include/sys/zstd/stdint.h                     |    2 +
+ include/sys/zstd/stdio.h                      |    2 +
+ include/sys/zstd/stdlib.h                     |   60 +
+ include/sys/zstd/string.h                     |    2 +
+ include/sys/zstd/zstd.h                       |   53 +
+ include/sys/zstd/zstd_kfreebsd.c              |   94 +
+ include/sys/zstd/zstd_kfreebsd.h              |   51 +
+ include/sys/zstd/zstd_kmalloc.c               |   39 +
+ include/zfeature_common.h                     |    1 +
+ lib/Makefile.am                               |    3 +
+ lib/libzpool/Makefile.am                      |    3 +-
+ lib/libzstd/Makefile.am                       |   45 +
+ man/man5/zpool-features.5                     |   44 +-
+ man/man8/zfsprops.8                           |   65 +-
+ module/Makefile.in                            |    2 +
+ module/zcommon/zfeature_common.c              |   22 +-
+ module/zcommon/zfs_prop.c                     |  115 +-
+ module/zfs/arc.c                              |   73 +-
+ module/zfs/blkptr.c                           |    2 +-
+ module/zfs/dbuf.c                             |   29 +-
+ module/zfs/dmu.c                              |   18 +-
+ module/zfs/dmu_objset.c                       |   41 +-
+ module/zfs/dmu_recv.c                         |   27 +-
+ module/zfs/dmu_send.c                         |   24 +-
+ module/zfs/dsl_dataset.c                      |   28 +-
+ module/zfs/spa_misc.c                         |    7 +
+ module/zfs/zcp_get.c                          |   24 +-
+ module/zfs/zfs_ioctl.c                        |  122 +-
+ module/zfs/zio.c                              |   26 +-
+ module/zfs/zio_compress.c                     |  103 +-
+ module/zstd/Makefile.in                       |   57 +
+ module/zstd/zstd.c                            |  609 +++
+ scripts/Makefile.am                           |    1 +
+ scripts/dkms.mkconf                           |    4 +
+ scripts/zfs.sh                                |   12 +-
+ tests/zfs-tests/include/properties.shlib      |    2 +-
+ .../cli_root/zpool_get/zpool_get.cfg          |    1 +
+ .../functional/history/history_002_pos.ksh    |    4 +-
+ 118 files changed, 29419 insertions(+), 204 deletions(-)
+ create mode 100644 contrib/zstd/.gitignore
  create mode 100644 contrib/zstd/Makefile.am
+ create mode 100644 contrib/zstd/README.md
  create mode 100644 contrib/zstd/THIRDPARTYLICENSE
  create mode 100644 contrib/zstd/THIRDPARTYLICENSE.gplv2
  create mode 100644 contrib/zstd/common/Makefile.am
@@ -143,9 +204,23 @@ Signed-off-by: Michael Niewöhner <foss@mniewoehner.de>
  create mode 100644 contrib/zstd/decompress/zstd_decompress_block.h
  create mode 100644 contrib/zstd/decompress/zstd_decompress_internal.h
  create mode 100644 contrib/zstd/zstd.h
+ create mode 100644 include/sys/zstd/Makefile.am
+ create mode 100644 include/sys/zstd/limits.h
+ create mode 100644 include/sys/zstd/stddef.h
+ create mode 100644 include/sys/zstd/stdint.h
+ create mode 100644 include/sys/zstd/stdio.h
+ create mode 100644 include/sys/zstd/stdlib.h
+ create mode 100644 include/sys/zstd/string.h
+ create mode 100644 include/sys/zstd/zstd.h
+ create mode 100644 include/sys/zstd/zstd_kfreebsd.c
+ create mode 100644 include/sys/zstd/zstd_kfreebsd.h
+ create mode 100644 include/sys/zstd/zstd_kmalloc.c
+ create mode 100644 lib/libzstd/Makefile.am
+ create mode 100644 module/zstd/Makefile.in
+ create mode 100644 module/zstd/zstd.c
 
 diff --git a/Makefile.am b/Makefile.am
-index 4c0b541ccd4..c7f82b44ff7 100644
+index 4c0b541cc..c7f82b44f 100644
 --- a/Makefile.am
 +++ b/Makefile.am
 @@ -104,7 +104,8 @@ commitcheck:
@@ -158,8 +233,37 @@ index 4c0b541ccd4..c7f82b44ff7 100644
  		! -name 'zfs_config.*' ! -name '*.mod.c' -type f \
  		-exec ${top_srcdir}/scripts/cstyle.pl -cpP {} \+
  
+diff --git a/cmd/dbufstat/dbufstat b/cmd/dbufstat/dbufstat
+index 4a57d8113..be41ae1c6 100755
+--- a/cmd/dbufstat/dbufstat
++++ b/cmd/dbufstat/dbufstat
+@@ -343,7 +343,7 @@ def get_compstring(c):
+                     "ZIO_COMPRESS_GZIP_6",  "ZIO_COMPRESS_GZIP_7",
+                     "ZIO_COMPRESS_GZIP_8",  "ZIO_COMPRESS_GZIP_9",
+                     "ZIO_COMPRESS_ZLE",     "ZIO_COMPRESS_LZ4",
+-                    "ZIO_COMPRESS_FUNCTION"]
++                    "ZIO_COMPRESS_ZSTD",    "ZIO_COMPRESS_FUNCTION"]
+ 
+     # If "-rr" option is used, don't convert to string representation
+     if raw > 1:
+diff --git a/cmd/zdb/zdb.c b/cmd/zdb/zdb.c
+index 825966555..ce108757e 100644
+--- a/cmd/zdb/zdb.c
++++ b/cmd/zdb/zdb.c
+@@ -6578,9 +6578,9 @@ zdb_read_block(char *thing, spa_t *spa)
+ 				VERIFY0(random_get_pseudo_bytes(lbuf2, lsize));
+ 
+ 				if (zio_decompress_data(*cfuncp, pabd,
+-				    lbuf, psize, lsize) == 0 &&
++				    lbuf, psize, lsize, NULL) == 0 &&
+ 				    zio_decompress_data(*cfuncp, pabd,
+-				    lbuf2, psize, lsize) == 0 &&
++				    lbuf2, psize, lsize, NULL) == 0 &&
+ 				    bcmp(lbuf, lbuf2, lsize) == 0)
+ 					break;
+ 			}
 diff --git a/config/ax_code_coverage.m4 b/config/ax_code_coverage.m4
-index 0d89974d9f9..dd6fac6bdf6 100644
+index 0d89974d9..dd6fac6bd 100644
 --- a/config/ax_code_coverage.m4
 +++ b/config/ax_code_coverage.m4
 @@ -222,7 +222,7 @@ CODE_COVERAGE_GENHTML_OPTIONS ?= $(CODE_COVERAGE_GENHTML_OPTIONS_DEFAULT)
@@ -172,7 +276,7 @@ index 0d89974d9f9..dd6fac6bdf6 100644
  GITIGNOREFILES ?=
  GITIGNOREFILES += $(CODE_COVERAGE_OUTPUT_FILE) $(CODE_COVERAGE_OUTPUT_DIRECTORY)
 diff --git a/configure.ac b/configure.ac
-index 1160897f319..e294791ac11 100644
+index 1160897f3..a92cf3fd3 100644
 --- a/configure.ac
 +++ b/configure.ac
 @@ -97,6 +97,10 @@ AC_CONFIG_FILES([
@@ -186,8 +290,32 @@ index 1160897f319..e294791ac11 100644
  	etc/Makefile
  	etc/init.d/Makefile
  	etc/modules-load.d/Makefile
+@@ -122,6 +126,7 @@ AC_CONFIG_FILES([
+ 	include/sys/fs/Makefile
+ 	include/sys/lua/Makefile
+ 	include/sys/sysevent/Makefile
++	include/sys/zstd/Makefile
+ 	lib/Makefile
+ 	lib/libavl/Makefile
+ 	lib/libefi/Makefile
+@@ -150,6 +155,7 @@ AC_CONFIG_FILES([
+ 	lib/libzfs/libzfs_core.pc
+ 	lib/libzfs_core/Makefile
+ 	lib/libzpool/Makefile
++	lib/libzstd/Makefile
+ 	lib/libzutil/Makefile
+ 	man/Makefile
+ 	man/man1/Makefile
+@@ -168,6 +174,7 @@ AC_CONFIG_FILES([
+ 	module/unicode/Makefile
+ 	module/zcommon/Makefile
+ 	module/zfs/Makefile
++	module/zstd/Makefile
+ 	rpm/Makefile
+ 	rpm/generic/Makefile
+ 	rpm/generic/zfs-dkms.spec
 diff --git a/contrib/Makefile.am b/contrib/Makefile.am
-index 9f34fd8354d..d8e8485e964 100644
+index 9f34fd835..d8e8485e9 100644
 --- a/contrib/Makefile.am
 +++ b/contrib/Makefile.am
 @@ -1,2 +1,2 @@
@@ -195,17 +323,54 @@ index 9f34fd8354d..d8e8485e964 100644
 -DIST_SUBDIRS = bash_completion.d bpftrace dracut initramfs pyzfs zcp
 +SUBDIRS = bash_completion.d bpftrace dracut initramfs pyzfs zcp zstd
 +DIST_SUBDIRS = bash_completion.d bpftrace dracut initramfs pyzfs zcp zstd
+diff --git a/contrib/zstd/.gitignore b/contrib/zstd/.gitignore
+new file mode 100644
+index 000000000..bae5d2bb0
+--- /dev/null
++++ b/contrib/zstd/.gitignore
+@@ -0,0 +1 @@
++*.o.cmd
 diff --git a/contrib/zstd/Makefile.am b/contrib/zstd/Makefile.am
 new file mode 100644
-index 00000000000..222b5d7727e
+index 000000000..222b5d772
 --- /dev/null
 +++ b/contrib/zstd/Makefile.am
 @@ -0,0 +1,2 @@
 +SUBDIRS = common compress decompress
 +EXTRA_DIST = common compress decompress zstd.h
+diff --git a/contrib/zstd/README.md b/contrib/zstd/README.md
+new file mode 100644
+index 000000000..ef5f27c10
+--- /dev/null
++++ b/contrib/zstd/README.md
+@@ -0,0 +1,24 @@
++# ZSTD Contrib Library Manual
++
++## Introduction
++
++This `contrib` contains the ZSTD library used in ZFS. It is heavily cut-down by
++dropping any unneeded files but otherwise is intentionally unmodified. Please do
++not alter these files in any way, besides upgrading to a newer ZSTD release.
++
++## Updating ZSTD
++
++To update ZSTD the following steps need to be taken:
++
++1. Grab the latest release of [ZSTD](https://github.com/facebook/zstd/releases).
++2. Replace (not merge) `common`, `compress`, `decompress` and `zstd.h` with the
++   new versions from `lib/`.
++3. Make sure any newly required files and/or folders are also included.
++   1. Add an empty file `Makefile.am` inside any new folder.
++   2. Add them to `AC_CONFIG_FILES` in `configure.ac` accordingly.
++   3. Make sure new files/folders are listed in
++      - `contrib/zstd/Makefile.am`
++      - `lib/libzstd/Makefile.am`
++      - `module/zstd/Makefile.in`
++      - this README
++4. Update the version `ZFS_MODULE_VERSION("x.y.z")` in `module/zstd/zstd.c`.
 diff --git a/contrib/zstd/THIRDPARTYLICENSE b/contrib/zstd/THIRDPARTYLICENSE
 new file mode 100644
-index 00000000000..a793a802892
+index 000000000..a793a8028
 --- /dev/null
 +++ b/contrib/zstd/THIRDPARTYLICENSE
 @@ -0,0 +1,30 @@
@@ -241,7 +406,7 @@ index 00000000000..a793a802892
 +SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 diff --git a/contrib/zstd/THIRDPARTYLICENSE.gplv2 b/contrib/zstd/THIRDPARTYLICENSE.gplv2
 new file mode 100644
-index 00000000000..ecbc0593737
+index 000000000..ecbc05937
 --- /dev/null
 +++ b/contrib/zstd/THIRDPARTYLICENSE.gplv2
 @@ -0,0 +1,339 @@
@@ -587,10 +752,10 @@ index 00000000000..ecbc0593737
 \ No newline at end of file
 diff --git a/contrib/zstd/common/Makefile.am b/contrib/zstd/common/Makefile.am
 new file mode 100644
-index 00000000000..e69de29bb2d
+index 000000000..e69de29bb
 diff --git a/contrib/zstd/common/bitstream.h b/contrib/zstd/common/bitstream.h
 new file mode 100644
-index 00000000000..1c294b80d13
+index 000000000..1c294b80d
 --- /dev/null
 +++ b/contrib/zstd/common/bitstream.h
 @@ -0,0 +1,460 @@
@@ -1056,7 +1221,7 @@ index 00000000000..1c294b80d13
 +#endif /* BITSTREAM_H_MODULE */
 diff --git a/contrib/zstd/common/compiler.h b/contrib/zstd/common/compiler.h
 new file mode 100644
-index 00000000000..1877a0c1d9b
+index 000000000..1877a0c1d
 --- /dev/null
 +++ b/contrib/zstd/common/compiler.h
 @@ -0,0 +1,159 @@
@@ -1221,7 +1386,7 @@ index 00000000000..1877a0c1d9b
 +#endif /* ZSTD_COMPILER_H */
 diff --git a/contrib/zstd/common/cpu.h b/contrib/zstd/common/cpu.h
 new file mode 100644
-index 00000000000..5f0923fc928
+index 000000000..5f0923fc9
 --- /dev/null
 +++ b/contrib/zstd/common/cpu.h
 @@ -0,0 +1,215 @@
@@ -1442,7 +1607,7 @@ index 00000000000..5f0923fc928
 +#endif /* ZSTD_COMMON_CPU_H */
 diff --git a/contrib/zstd/common/debug.c b/contrib/zstd/common/debug.c
 new file mode 100644
-index 00000000000..3ebdd1cb15a
+index 000000000..3ebdd1cb1
 --- /dev/null
 +++ b/contrib/zstd/common/debug.c
 @@ -0,0 +1,44 @@
@@ -1492,7 +1657,7 @@ index 00000000000..3ebdd1cb15a
 +int g_debuglevel = DEBUGLEVEL;
 diff --git a/contrib/zstd/common/debug.h b/contrib/zstd/common/debug.h
 new file mode 100644
-index 00000000000..b4fc89d4974
+index 000000000..b4fc89d49
 --- /dev/null
 +++ b/contrib/zstd/common/debug.h
 @@ -0,0 +1,134 @@
@@ -1632,7 +1797,7 @@ index 00000000000..b4fc89d4974
 +#endif /* DEBUG_H_12987983217 */
 diff --git a/contrib/zstd/common/entropy_common.c b/contrib/zstd/common/entropy_common.c
 new file mode 100644
-index 00000000000..b12944e1de9
+index 000000000..b12944e1d
 --- /dev/null
 +++ b/contrib/zstd/common/entropy_common.c
 @@ -0,0 +1,236 @@
@@ -1874,7 +2039,7 @@ index 00000000000..b12944e1de9
 +}
 diff --git a/contrib/zstd/common/error_private.c b/contrib/zstd/common/error_private.c
 new file mode 100644
-index 00000000000..7c1bb67a23f
+index 000000000..7c1bb67a2
 --- /dev/null
 +++ b/contrib/zstd/common/error_private.c
 @@ -0,0 +1,54 @@
@@ -1934,7 +2099,7 @@ index 00000000000..7c1bb67a23f
 +}
 diff --git a/contrib/zstd/common/error_private.h b/contrib/zstd/common/error_private.h
 new file mode 100644
-index 00000000000..0d2fa7e34b0
+index 000000000..0d2fa7e34
 --- /dev/null
 +++ b/contrib/zstd/common/error_private.h
 @@ -0,0 +1,76 @@
@@ -2016,7 +2181,7 @@ index 00000000000..0d2fa7e34b0
 +#endif /* ERROR_H_MODULE */
 diff --git a/contrib/zstd/common/fse.h b/contrib/zstd/common/fse.h
 new file mode 100644
-index 00000000000..a7553e3721c
+index 000000000..a7553e372
 --- /dev/null
 +++ b/contrib/zstd/common/fse.h
 @@ -0,0 +1,708 @@
@@ -2730,7 +2895,7 @@ index 00000000000..a7553e3721c
 +#endif
 diff --git a/contrib/zstd/common/fse_decompress.c b/contrib/zstd/common/fse_decompress.c
 new file mode 100644
-index 00000000000..4f073789820
+index 000000000..4f0737898
 --- /dev/null
 +++ b/contrib/zstd/common/fse_decompress.c
 @@ -0,0 +1,311 @@
@@ -3047,7 +3212,7 @@ index 00000000000..4f073789820
 +#endif   /* FSE_COMMONDEFS_ONLY */
 diff --git a/contrib/zstd/common/huf.h b/contrib/zstd/common/huf.h
 new file mode 100644
-index 00000000000..6b572c448d9
+index 000000000..6b572c448
 --- /dev/null
 +++ b/contrib/zstd/common/huf.h
 @@ -0,0 +1,358 @@
@@ -3411,7 +3576,7 @@ index 00000000000..6b572c448d9
 +#endif
 diff --git a/contrib/zstd/common/mem.h b/contrib/zstd/common/mem.h
 new file mode 100644
-index 00000000000..530d30c8f75
+index 000000000..530d30c8f
 --- /dev/null
 +++ b/contrib/zstd/common/mem.h
 @@ -0,0 +1,453 @@
@@ -3870,7 +4035,7 @@ index 00000000000..530d30c8f75
 +#endif /* MEM_H_MODULE */
 diff --git a/contrib/zstd/common/pool.c b/contrib/zstd/common/pool.c
 new file mode 100644
-index 00000000000..f575935076c
+index 000000000..f57593507
 --- /dev/null
 +++ b/contrib/zstd/common/pool.c
 @@ -0,0 +1,344 @@
@@ -4220,7 +4385,7 @@ index 00000000000..f575935076c
 +#endif  /* ZSTD_MULTITHREAD */
 diff --git a/contrib/zstd/common/pool.h b/contrib/zstd/common/pool.h
 new file mode 100644
-index 00000000000..458d37f13c3
+index 000000000..458d37f13
 --- /dev/null
 +++ b/contrib/zstd/common/pool.h
 @@ -0,0 +1,84 @@
@@ -4310,7 +4475,7 @@ index 00000000000..458d37f13c3
 +#endif
 diff --git a/contrib/zstd/common/threading.c b/contrib/zstd/common/threading.c
 new file mode 100644
-index 00000000000..482664bd9ad
+index 000000000..482664bd9
 --- /dev/null
 +++ b/contrib/zstd/common/threading.c
 @@ -0,0 +1,120 @@
@@ -4436,7 +4601,7 @@ index 00000000000..482664bd9ad
 +#endif
 diff --git a/contrib/zstd/common/threading.h b/contrib/zstd/common/threading.h
 new file mode 100644
-index 00000000000..3193ca7db86
+index 000000000..3193ca7db
 --- /dev/null
 +++ b/contrib/zstd/common/threading.h
 @@ -0,0 +1,154 @@
@@ -4596,7 +4761,7 @@ index 00000000000..3193ca7db86
 +#endif /* THREADING_H_938743 */
 diff --git a/contrib/zstd/common/xxhash.c b/contrib/zstd/common/xxhash.c
 new file mode 100644
-index 00000000000..99d24596218
+index 000000000..99d245962
 --- /dev/null
 +++ b/contrib/zstd/common/xxhash.c
 @@ -0,0 +1,882 @@
@@ -5484,7 +5649,7 @@ index 00000000000..99d24596218
 +}
 diff --git a/contrib/zstd/common/xxhash.h b/contrib/zstd/common/xxhash.h
 new file mode 100644
-index 00000000000..9bad1f59f63
+index 000000000..9bad1f59f
 --- /dev/null
 +++ b/contrib/zstd/common/xxhash.h
 @@ -0,0 +1,305 @@
@@ -5795,7 +5960,7 @@ index 00000000000..9bad1f59f63
 +#endif
 diff --git a/contrib/zstd/common/zstd_common.c b/contrib/zstd/common/zstd_common.c
 new file mode 100644
-index 00000000000..667f4a27fc6
+index 000000000..667f4a27f
 --- /dev/null
 +++ b/contrib/zstd/common/zstd_common.c
 @@ -0,0 +1,83 @@
@@ -5884,7 +6049,7 @@ index 00000000000..667f4a27fc6
 +}
 diff --git a/contrib/zstd/common/zstd_errors.h b/contrib/zstd/common/zstd_errors.h
 new file mode 100644
-index 00000000000..92a3433896c
+index 000000000..92a343389
 --- /dev/null
 +++ b/contrib/zstd/common/zstd_errors.h
 @@ -0,0 +1,93 @@
@@ -5983,7 +6148,7 @@ index 00000000000..92a3433896c
 +#endif /* ZSTD_ERRORS_H_398273423 */
 diff --git a/contrib/zstd/common/zstd_internal.h b/contrib/zstd/common/zstd_internal.h
 new file mode 100644
-index 00000000000..dcdcbdb81cd
+index 000000000..dcdcbdb81
 --- /dev/null
 +++ b/contrib/zstd/common/zstd_internal.h
 @@ -0,0 +1,350 @@
@@ -6339,10 +6504,10 @@ index 00000000000..dcdcbdb81cd
 +#endif   /* ZSTD_CCOMMON_H_MODULE */
 diff --git a/contrib/zstd/compress/Makefile.am b/contrib/zstd/compress/Makefile.am
 new file mode 100644
-index 00000000000..e69de29bb2d
+index 000000000..e69de29bb
 diff --git a/contrib/zstd/compress/fse_compress.c b/contrib/zstd/compress/fse_compress.c
 new file mode 100644
-index 00000000000..68b47e10935
+index 000000000..68b47e109
 --- /dev/null
 +++ b/contrib/zstd/compress/fse_compress.c
 @@ -0,0 +1,721 @@
@@ -7069,7 +7234,7 @@ index 00000000000..68b47e10935
 +#endif   /* FSE_COMMONDEFS_ONLY */
 diff --git a/contrib/zstd/compress/hist.c b/contrib/zstd/compress/hist.c
 new file mode 100644
-index 00000000000..45b7babc1e2
+index 000000000..45b7babc1
 --- /dev/null
 +++ b/contrib/zstd/compress/hist.c
 @@ -0,0 +1,203 @@
@@ -7278,7 +7443,7 @@ index 00000000000..45b7babc1e2
 +}
 diff --git a/contrib/zstd/compress/hist.h b/contrib/zstd/compress/hist.h
 new file mode 100644
-index 00000000000..8b389358dc1
+index 000000000..8b389358d
 --- /dev/null
 +++ b/contrib/zstd/compress/hist.h
 @@ -0,0 +1,95 @@
@@ -7379,7 +7544,7 @@ index 00000000000..8b389358dc1
 +                           const void* src, size_t srcSize);
 diff --git a/contrib/zstd/compress/huf_compress.c b/contrib/zstd/compress/huf_compress.c
 new file mode 100644
-index 00000000000..f074f1e0a95
+index 000000000..f074f1e0a
 --- /dev/null
 +++ b/contrib/zstd/compress/huf_compress.c
 @@ -0,0 +1,798 @@
@@ -8183,7 +8348,7 @@ index 00000000000..f074f1e0a95
 +}
 diff --git a/contrib/zstd/compress/zstd_compress.c b/contrib/zstd/compress/zstd_compress.c
 new file mode 100644
-index 00000000000..35346b92cb1
+index 000000000..35346b92c
 --- /dev/null
 +++ b/contrib/zstd/compress/zstd_compress.c
 @@ -0,0 +1,4103 @@
@@ -12292,7 +12457,7 @@ index 00000000000..35346b92cb1
 +}
 diff --git a/contrib/zstd/compress/zstd_compress_internal.h b/contrib/zstd/compress/zstd_compress_internal.h
 new file mode 100644
-index 00000000000..14036f873f5
+index 000000000..14036f873
 --- /dev/null
 +++ b/contrib/zstd/compress/zstd_compress_internal.h
 @@ -0,0 +1,1003 @@
@@ -13301,7 +13466,7 @@ index 00000000000..14036f873f5
 +#endif /* ZSTD_COMPRESS_H */
 diff --git a/contrib/zstd/compress/zstd_compress_literals.c b/contrib/zstd/compress/zstd_compress_literals.c
 new file mode 100644
-index 00000000000..6c133311821
+index 000000000..6c1333118
 --- /dev/null
 +++ b/contrib/zstd/compress/zstd_compress_literals.c
 @@ -0,0 +1,154 @@
@@ -13461,7 +13626,7 @@ index 00000000000..6c133311821
 +}
 diff --git a/contrib/zstd/compress/zstd_compress_literals.h b/contrib/zstd/compress/zstd_compress_literals.h
 new file mode 100644
-index 00000000000..97273d7cfdb
+index 000000000..97273d7cf
 --- /dev/null
 +++ b/contrib/zstd/compress/zstd_compress_literals.h
 @@ -0,0 +1,29 @@
@@ -13496,7 +13661,7 @@ index 00000000000..97273d7cfdb
 +#endif /* ZSTD_COMPRESS_LITERALS_H */
 diff --git a/contrib/zstd/compress/zstd_compress_sequences.c b/contrib/zstd/compress/zstd_compress_sequences.c
 new file mode 100644
-index 00000000000..0ff7a26823b
+index 000000000..0ff7a2682
 --- /dev/null
 +++ b/contrib/zstd/compress/zstd_compress_sequences.c
 @@ -0,0 +1,415 @@
@@ -13917,7 +14082,7 @@ index 00000000000..0ff7a26823b
 +}
 diff --git a/contrib/zstd/compress/zstd_compress_sequences.h b/contrib/zstd/compress/zstd_compress_sequences.h
 new file mode 100644
-index 00000000000..57e8e367b09
+index 000000000..57e8e367b
 --- /dev/null
 +++ b/contrib/zstd/compress/zstd_compress_sequences.h
 @@ -0,0 +1,47 @@
@@ -13970,7 +14135,7 @@ index 00000000000..57e8e367b09
 +#endif /* ZSTD_COMPRESS_SEQUENCES_H */
 diff --git a/contrib/zstd/compress/zstd_cwksp.h b/contrib/zstd/compress/zstd_cwksp.h
 new file mode 100644
-index 00000000000..fc9765bd3f3
+index 000000000..fc9765bd3
 --- /dev/null
 +++ b/contrib/zstd/compress/zstd_cwksp.h
 @@ -0,0 +1,535 @@
@@ -14511,7 +14676,7 @@ index 00000000000..fc9765bd3f3
 +#endif /* ZSTD_CWKSP_H */
 diff --git a/contrib/zstd/compress/zstd_double_fast.c b/contrib/zstd/compress/zstd_double_fast.c
 new file mode 100644
-index 00000000000..a661a48534d
+index 000000000..a661a4853
 --- /dev/null
 +++ b/contrib/zstd/compress/zstd_double_fast.c
 @@ -0,0 +1,518 @@
@@ -15035,7 +15200,7 @@ index 00000000000..a661a48534d
 +}
 diff --git a/contrib/zstd/compress/zstd_double_fast.h b/contrib/zstd/compress/zstd_double_fast.h
 new file mode 100644
-index 00000000000..4fa31acfc0d
+index 000000000..4fa31acfc
 --- /dev/null
 +++ b/contrib/zstd/compress/zstd_double_fast.h
 @@ -0,0 +1,38 @@
@@ -15079,7 +15244,7 @@ index 00000000000..4fa31acfc0d
 +#endif /* ZSTD_DOUBLE_FAST_H */
 diff --git a/contrib/zstd/compress/zstd_fast.c b/contrib/zstd/compress/zstd_fast.c
 new file mode 100644
-index 00000000000..6dbefee6b7f
+index 000000000..6dbefee6b
 --- /dev/null
 +++ b/contrib/zstd/compress/zstd_fast.c
 @@ -0,0 +1,484 @@
@@ -15569,7 +15734,7 @@ index 00000000000..6dbefee6b7f
 +}
 diff --git a/contrib/zstd/compress/zstd_fast.h b/contrib/zstd/compress/zstd_fast.h
 new file mode 100644
-index 00000000000..b74a88c57c8
+index 000000000..b74a88c57
 --- /dev/null
 +++ b/contrib/zstd/compress/zstd_fast.h
 @@ -0,0 +1,37 @@
@@ -15612,7 +15777,7 @@ index 00000000000..b74a88c57c8
 +#endif /* ZSTD_FAST_H */
 diff --git a/contrib/zstd/compress/zstd_lazy.c b/contrib/zstd/compress/zstd_lazy.c
 new file mode 100644
-index 00000000000..9ad7e03b54c
+index 000000000..9ad7e03b5
 --- /dev/null
 +++ b/contrib/zstd/compress/zstd_lazy.c
 @@ -0,0 +1,1115 @@
@@ -16733,7 +16898,7 @@ index 00000000000..9ad7e03b54c
 +}
 diff --git a/contrib/zstd/compress/zstd_lazy.h b/contrib/zstd/compress/zstd_lazy.h
 new file mode 100644
-index 00000000000..bb1763069f3
+index 000000000..bb1763069
 --- /dev/null
 +++ b/contrib/zstd/compress/zstd_lazy.h
 @@ -0,0 +1,67 @@
@@ -16806,7 +16971,7 @@ index 00000000000..bb1763069f3
 +#endif /* ZSTD_LAZY_H */
 diff --git a/contrib/zstd/compress/zstd_ldm.c b/contrib/zstd/compress/zstd_ldm.c
 new file mode 100644
-index 00000000000..c3312ad3e3d
+index 000000000..c3312ad3e
 --- /dev/null
 +++ b/contrib/zstd/compress/zstd_ldm.c
 @@ -0,0 +1,597 @@
@@ -17409,7 +17574,7 @@ index 00000000000..c3312ad3e3d
 +}
 diff --git a/contrib/zstd/compress/zstd_ldm.h b/contrib/zstd/compress/zstd_ldm.h
 new file mode 100644
-index 00000000000..a47846128b2
+index 000000000..a47846128
 --- /dev/null
 +++ b/contrib/zstd/compress/zstd_ldm.h
 @@ -0,0 +1,105 @@
@@ -17520,7 +17685,7 @@ index 00000000000..a47846128b2
 +#endif /* ZSTD_FAST_H */
 diff --git a/contrib/zstd/compress/zstd_opt.c b/contrib/zstd/compress/zstd_opt.c
 new file mode 100644
-index 00000000000..2e50fca6ff5
+index 000000000..2e50fca6f
 --- /dev/null
 +++ b/contrib/zstd/compress/zstd_opt.c
 @@ -0,0 +1,1246 @@
@@ -18772,7 +18937,7 @@ index 00000000000..2e50fca6ff5
 + * and is only specific for the first block (no prefix) */
 diff --git a/contrib/zstd/compress/zstd_opt.h b/contrib/zstd/compress/zstd_opt.h
 new file mode 100644
-index 00000000000..094f7476650
+index 000000000..094f74766
 --- /dev/null
 +++ b/contrib/zstd/compress/zstd_opt.h
 @@ -0,0 +1,56 @@
@@ -18834,7 +18999,7 @@ index 00000000000..094f7476650
 +#endif /* ZSTD_OPT_H */
 diff --git a/contrib/zstd/compress/zstdmt_compress.c b/contrib/zstd/compress/zstdmt_compress.c
 new file mode 100644
-index 00000000000..bc3062b5309
+index 000000000..bc3062b53
 --- /dev/null
 +++ b/contrib/zstd/compress/zstdmt_compress.c
 @@ -0,0 +1,2116 @@
@@ -20956,7 +21121,7 @@ index 00000000000..bc3062b5309
 +}
 diff --git a/contrib/zstd/compress/zstdmt_compress.h b/contrib/zstd/compress/zstdmt_compress.h
 new file mode 100644
-index 00000000000..12a526087db
+index 000000000..12a526087
 --- /dev/null
 +++ b/contrib/zstd/compress/zstdmt_compress.h
 @@ -0,0 +1,192 @@
@@ -21154,10 +21319,10 @@ index 00000000000..12a526087db
 +#endif   /* ZSTDMT_COMPRESS_H */
 diff --git a/contrib/zstd/decompress/Makefile.am b/contrib/zstd/decompress/Makefile.am
 new file mode 100644
-index 00000000000..e69de29bb2d
+index 000000000..e69de29bb
 diff --git a/contrib/zstd/decompress/huf_decompress.c b/contrib/zstd/decompress/huf_decompress.c
 new file mode 100644
-index 00000000000..bb2d0a96bc1
+index 000000000..bb2d0a96b
 --- /dev/null
 +++ b/contrib/zstd/decompress/huf_decompress.c
 @@ -0,0 +1,1234 @@
@@ -22397,7 +22562,7 @@ index 00000000000..bb2d0a96bc1
 +}
 diff --git a/contrib/zstd/decompress/zstd_ddict.c b/contrib/zstd/decompress/zstd_ddict.c
 new file mode 100644
-index 00000000000..0af3d23bfe2
+index 000000000..0af3d23bf
 --- /dev/null
 +++ b/contrib/zstd/decompress/zstd_ddict.c
 @@ -0,0 +1,240 @@
@@ -22643,7 +22808,7 @@ index 00000000000..0af3d23bfe2
 +}
 diff --git a/contrib/zstd/decompress/zstd_ddict.h b/contrib/zstd/decompress/zstd_ddict.h
 new file mode 100644
-index 00000000000..0479d11bb03
+index 000000000..0479d11bb
 --- /dev/null
 +++ b/contrib/zstd/decompress/zstd_ddict.h
 @@ -0,0 +1,44 @@
@@ -22693,7 +22858,7 @@ index 00000000000..0479d11bb03
 +#endif /* ZSTD_DDICT_H */
 diff --git a/contrib/zstd/decompress/zstd_decompress.c b/contrib/zstd/decompress/zstd_decompress.c
 new file mode 100644
-index 00000000000..dd4591b7be9
+index 000000000..dd4591b7b
 --- /dev/null
 +++ b/contrib/zstd/decompress/zstd_decompress.c
 @@ -0,0 +1,1769 @@
@@ -24468,7 +24633,7 @@ index 00000000000..dd4591b7be9
 +}
 diff --git a/contrib/zstd/decompress/zstd_decompress_block.c b/contrib/zstd/decompress/zstd_decompress_block.c
 new file mode 100644
-index 00000000000..767e5f9a0b0
+index 000000000..767e5f9a0
 --- /dev/null
 +++ b/contrib/zstd/decompress/zstd_decompress_block.c
 @@ -0,0 +1,1323 @@
@@ -25797,7 +25962,7 @@ index 00000000000..767e5f9a0b0
 +}
 diff --git a/contrib/zstd/decompress/zstd_decompress_block.h b/contrib/zstd/decompress/zstd_decompress_block.h
 new file mode 100644
-index 00000000000..7e929604102
+index 000000000..7e9296041
 --- /dev/null
 +++ b/contrib/zstd/decompress/zstd_decompress_block.h
 @@ -0,0 +1,59 @@
@@ -25862,7 +26027,7 @@ index 00000000000..7e929604102
 +#endif /* ZSTD_DEC_BLOCK_H */
 diff --git a/contrib/zstd/decompress/zstd_decompress_internal.h b/contrib/zstd/decompress/zstd_decompress_internal.h
 new file mode 100644
-index 00000000000..ccbdfa090fa
+index 000000000..ccbdfa090
 --- /dev/null
 +++ b/contrib/zstd/decompress/zstd_decompress_internal.h
 @@ -0,0 +1,175 @@
@@ -26043,7 +26208,7 @@ index 00000000000..ccbdfa090fa
 +#endif /* ZSTD_DECOMPRESS_INTERNAL_H */
 diff --git a/contrib/zstd/zstd.h b/contrib/zstd/zstd.h
 new file mode 100644
-index 00000000000..72080ea87e8
+index 000000000..72080ea87
 --- /dev/null
 +++ b/contrib/zstd/zstd.h
 @@ -0,0 +1,2049 @@
@@ -28096,63 +28261,39 @@ index 00000000000..72080ea87e8
 +#if defined (__cplusplus)
 +}
 +#endif
-
-From 1c526a9717730d3db4d71490a2f87a05678e62a7 Mon Sep 17 00:00:00 2001
-From: =?UTF-8?q?Michael=20Niew=C3=B6hner?= <foss@mniewoehner.de>
-Date: Sun, 1 Dec 2019 16:24:36 +0100
-Subject: [PATCH 2/6] Import ZStandard build compatibility headers from FreeBSD
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-
-These files make ZStandard compile as a kernel module without modifying
-the ZStandard source files.
-
-Removed unexpanded SVN version tracking tags from FreeBSD
-
-Co-authored-by: Allan Jude <allanjude@freebsd.org>
-Co-authored-by: Michael Niewöhner <foss@mniewoehner.de>
-Signed-off-by: Allan Jude <allanjude@freebsd.org>
-Signed-off-by: Michael Niewöhner <foss@mniewoehner.de>
----
- configure.ac                     |  1 +
- include/sys/Makefile.am          |  2 +-
- include/sys/zstd/Makefile.am     | 26 +++++++++
- include/sys/zstd/limits.h        |  6 ++
- include/sys/zstd/stddef.h        |  2 +
- include/sys/zstd/stdint.h        |  2 +
- include/sys/zstd/stdio.h         |  2 +
- include/sys/zstd/stdlib.h        | 60 ++++++++++++++++++++
- include/sys/zstd/string.h        |  2 +
- include/sys/zstd/zstd_kfreebsd.c | 94 ++++++++++++++++++++++++++++++++
- include/sys/zstd/zstd_kfreebsd.h | 51 +++++++++++++++++
- include/sys/zstd/zstd_kmalloc.c  | 39 +++++++++++++
- 12 files changed, 286 insertions(+), 1 deletion(-)
- create mode 100644 include/sys/zstd/Makefile.am
- create mode 100644 include/sys/zstd/limits.h
- create mode 100644 include/sys/zstd/stddef.h
- create mode 100644 include/sys/zstd/stdint.h
- create mode 100644 include/sys/zstd/stdio.h
- create mode 100644 include/sys/zstd/stdlib.h
- create mode 100644 include/sys/zstd/string.h
- create mode 100644 include/sys/zstd/zstd_kfreebsd.c
- create mode 100644 include/sys/zstd/zstd_kfreebsd.h
- create mode 100644 include/sys/zstd/zstd_kmalloc.c
-
-diff --git a/configure.ac b/configure.ac
-index e294791ac11..8f24072bf5e 100644
---- a/configure.ac
-+++ b/configure.ac
-@@ -126,6 +126,7 @@ AC_CONFIG_FILES([
- 	include/sys/fs/Makefile
- 	include/sys/lua/Makefile
- 	include/sys/sysevent/Makefile
-+	include/sys/zstd/Makefile
- 	lib/Makefile
- 	lib/libavl/Makefile
- 	lib/libefi/Makefile
+diff --git a/copy-builtin b/copy-builtin
+index 700e6f4f0..7ee8c45db 100755
+--- a/copy-builtin
++++ b/copy-builtin
+@@ -41,6 +41,8 @@ scripts/make_gitrev.sh || true
+ rm -rf "$KERNEL_DIR/include/zfs" "$KERNEL_DIR/fs/zfs"
+ cp --recursive include "$KERNEL_DIR/include/zfs"
+ cp --recursive module "$KERNEL_DIR/fs/zfs"
++mkdir "$KERNEL_DIR/fs/zfs/contrib"
++cp --recursive contrib/zstd "$KERNEL_DIR/fs/zfs/contrib"
+ cp zfs_config.h "$KERNEL_DIR/include/zfs/"
+ 
+ for MODULE in "${MODULES[@]}"
+@@ -72,10 +74,16 @@ EOF
+ 	ZFS_MODULE_CFLAGS += -I$(srctree)/include/zfs/os/linux/zfs
+ 	ZFS_MODULE_CFLAGS += -I$(srctree)/include/zfs/os/linux/kernel
+ 	ZFS_MODULE_CFLAGS += -include $(srctree)/include/zfs/zfs_config.h
++	ZFS_MODULE_CFLAGS += -I$(srctree)/fs/zfs/contrib/zstd
++	ZFS_MODULE_CFLAGS += -I$(srctree)/fs/zfs/contrib/zstd/common
++	ZFS_MODULE_CFLAGS += -I$(srctree)/fs/zfs/contrib/zstd/compress
++	ZFS_MODULE_CFLAGS += -I$(srctree)/fs/zfs/contrib/zstd/decompress
++	ZFS_MODULE_CFLAGS += -I$(srctree)/include/zfs/sys/zstd
+ 	ZFS_MODULE_CFLAGS += -std=gnu99 -Wno-declaration-after-statement
+ 	ZFS_MODULE_CPPFLAGS  = -D_KERNEL
+ 	ZFS_MODULE_CPPFLAGS += -UDEBUG -DNDEBUG
+-	export ZFS_MODULE_CFLAGS ZFS_MODULE_CPPFLAGS
++	ZSTD_PATH = ../contrib/zstd
++	export ZFS_MODULE_CFLAGS ZFS_MODULE_CPPFLAGS ZSTD_PATH
+ 
+ 	obj-$(CONFIG_ZFS) :=
+ 	EOF
 diff --git a/include/sys/Makefile.am b/include/sys/Makefile.am
-index 99e38acb223..d8f27cfa270 100644
+index 99e38acb2..d8f27cfa2 100644
 --- a/include/sys/Makefile.am
 +++ b/include/sys/Makefile.am
 @@ -1,4 +1,4 @@
@@ -28161,12 +28302,350 @@ index 99e38acb223..d8f27cfa270 100644
  
  COMMON_H = \
  	$(top_srcdir)/include/sys/abd.h \
+diff --git a/include/sys/arc.h b/include/sys/arc.h
+index f6dea3fbd..522d6336b 100644
+--- a/include/sys/arc.h
++++ b/include/sys/arc.h
+@@ -18,10 +18,14 @@
+  *
+  * CDDL HEADER END
+  */
++
+ /*
+  * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+- * Copyright (c) 2012, 2016 by Delphix. All rights reserved.
+- * Copyright (c) 2013 by Saso Kiselkov. All rights reserved.
++ * Copyright (c) 2012, 2016, Delphix. All rights reserved.
++ * Copyright (c) 2013, Saso Kiselkov. All rights reserved.
++ * Copyright (c) 2019, Allan Jude. All rights reserved.
++ * Copyright (c) 2019, Klara Inc. All rights reserved.
++ * Use is subject to license terms.
+  */
+ 
+ #ifndef	_SYS_ARC_H
+@@ -245,18 +249,20 @@ void arc_convert_to_raw(arc_buf_t *buf, uint64_t dsobj, boolean_t byteorder,
+ arc_buf_t *arc_alloc_buf(spa_t *spa, void *tag, arc_buf_contents_t type,
+     int32_t size);
+ arc_buf_t *arc_alloc_compressed_buf(spa_t *spa, void *tag,
+-    uint64_t psize, uint64_t lsize, enum zio_compress compression_type);
++    uint64_t psize, uint64_t lsize, enum zio_compress compression_type,
++    uint8_t complevel);
+ arc_buf_t *arc_alloc_raw_buf(spa_t *spa, void *tag, uint64_t dsobj,
+     boolean_t byteorder, const uint8_t *salt, const uint8_t *iv,
+     const uint8_t *mac, dmu_object_type_t ot, uint64_t psize, uint64_t lsize,
+-    enum zio_compress compression_type);
++    enum zio_compress compression_type, uint8_t complevel);
++uint8_t arc_get_complevel(arc_buf_t *buf);
+ arc_buf_t *arc_loan_buf(spa_t *spa, boolean_t is_metadata, int size);
+ arc_buf_t *arc_loan_compressed_buf(spa_t *spa, uint64_t psize, uint64_t lsize,
+-    enum zio_compress compression_type);
++    enum zio_compress compression_type, uint8_t complevel);
+ arc_buf_t *arc_loan_raw_buf(spa_t *spa, uint64_t dsobj, boolean_t byteorder,
+     const uint8_t *salt, const uint8_t *iv, const uint8_t *mac,
+     dmu_object_type_t ot, uint64_t psize, uint64_t lsize,
+-    enum zio_compress compression_type);
++    enum zio_compress compression_type, uint8_t complevel);
+ void arc_return_buf(arc_buf_t *buf, void *tag);
+ void arc_loan_inuse_buf(arc_buf_t *buf, void *tag);
+ void arc_buf_destroy(arc_buf_t *buf, void *tag);
+diff --git a/include/sys/arc_impl.h b/include/sys/arc_impl.h
+index 8eeee54c9..2a21eb980 100644
+--- a/include/sys/arc_impl.h
++++ b/include/sys/arc_impl.h
+@@ -240,6 +240,9 @@ struct arc_buf_hdr {
+ 	uint64_t		b_birth;
+ 
+ 	arc_buf_contents_t	b_type;
++	uint8_t			b_complevel;
++	uint8_t			b_reserved1; /* used for 4 byte alignment */
++	uint16_t		b_reserved2; /* used for 4 byte alignment */
+ 	arc_buf_hdr_t		*b_hash_next;
+ 	arc_flags_t		b_flags;
+ 
+diff --git a/include/sys/dmu_objset.h b/include/sys/dmu_objset.h
+index 9b6614e98..5ff0adf4d 100644
+--- a/include/sys/dmu_objset.h
++++ b/include/sys/dmu_objset.h
+@@ -118,6 +118,7 @@ struct objset {
+ 	uint64_t os_dnodesize; /* default dnode size for new objects */
+ 	enum zio_checksum os_checksum;
+ 	enum zio_compress os_compress;
++	uint8_t os_complevel;
+ 	uint8_t os_copies;
+ 	enum zio_checksum os_dedup_checksum;
+ 	boolean_t os_dedup_verify;
+diff --git a/include/sys/fs/zfs.h b/include/sys/fs/zfs.h
+index 2f35563bc..5a9c869b8 100644
+--- a/include/sys/fs/zfs.h
++++ b/include/sys/fs/zfs.h
+@@ -186,6 +186,7 @@ typedef enum {
+ 	ZFS_PROP_IVSET_GUID,		/* not exposed to the user */
+ 	ZFS_PROP_REDACTED,
+ 	ZFS_PROP_REDACT_SNAPS,
++	ZFS_PROP_COMPRESS_LEVEL,	/* not exposed to the user */
+ 	ZFS_NUM_PROPS
+ } zfs_prop_t;
+ 
+diff --git a/include/sys/spa.h b/include/sys/spa.h
+index 780119e9a..18ae9fb28 100644
+--- a/include/sys/spa.h
++++ b/include/sys/spa.h
+@@ -18,16 +18,20 @@
+  *
+  * CDDL HEADER END
+  */
++
+ /*
+  * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+- * Copyright (c) 2011, 2019 by Delphix. All rights reserved.
+- * Copyright 2011 Nexenta Systems, Inc.  All rights reserved.
+- * Copyright (c) 2014 Spectra Logic Corporation, All rights reserved.
+- * Copyright 2013 Saso Kiselkov. All rights reserved.
+- * Copyright (c) 2014 Integros [integros.com]
+- * Copyright 2017 Joyent, Inc.
+- * Copyright (c) 2017, 2019, Datto Inc. All rights reserved.
+- * Copyright (c) 2017, Intel Corporation.
++ * Copyright (c) 2011, 2019, Delphix. All rights reserved.
++ * Copyright (c) 2011, Nexenta Systems Inc. All rights reserved.
++ * Copyright (c) 2014, Spectra Logic Corporation. All rights reserved.
++ * Copyright (c) 2013, Saso Kiselkov. All rights reserved.
++ * Copyright (c) 2014, Integros. All rights reserved.
++ * Copyright (c) 2017, Joyent, Inc. All rights reserved.
++ * Copyright (c) 2017, Datto Inc. All rights reserved.
++ * Copyright (c) 2017, Intel Corporation. All rights reserved.
++ * Copyright (c) 2019, Allan Jude. All rights reserved.
++ * Copyright (c) 2019, Klara Inc. All rights reserved.
++ * Use is subject to license terms.
+  */
+ 
+ #ifndef _SYS_SPA_H
+@@ -120,6 +124,7 @@ struct dsl_crypto_params;
+ 
+ #define	SPA_COMPRESSBITS	7
+ #define	SPA_VDEVBITS		24
++#define	SPA_COMPRESSMASK	((1U << SPA_COMPRESSBITS) - 1)
+ 
+ /*
+  * All SPA data is represented by 128-bit data virtual addresses (DVAs).
+diff --git a/include/sys/zfs_ioctl.h b/include/sys/zfs_ioctl.h
+index da5a3ee60..e49c14405 100644
+--- a/include/sys/zfs_ioctl.h
++++ b/include/sys/zfs_ioctl.h
+@@ -105,7 +105,7 @@ typedef enum drr_headertype {
+ #define	DMU_BACKUP_FEATURE_COMPRESSED		(1 << 22)
+ #define	DMU_BACKUP_FEATURE_LARGE_DNODE		(1 << 23)
+ #define	DMU_BACKUP_FEATURE_RAW			(1 << 24)
+-/* flag #25 is reserved for the ZSTD compression feature */
++#define	DMU_BACKUP_FEATURE_ZSTD			(1 << 25)
+ #define	DMU_BACKUP_FEATURE_HOLDS		(1 << 26)
+ 
+ /*
+@@ -117,7 +117,7 @@ typedef enum drr_headertype {
+     DMU_BACKUP_FEATURE_RESUMING | DMU_BACKUP_FEATURE_LARGE_BLOCKS | \
+     DMU_BACKUP_FEATURE_COMPRESSED | DMU_BACKUP_FEATURE_LARGE_DNODE | \
+     DMU_BACKUP_FEATURE_RAW | DMU_BACKUP_FEATURE_HOLDS | \
+-	DMU_BACKUP_FEATURE_REDACTED)
++    DMU_BACKUP_FEATURE_REDACTED | DMU_BACKUP_FEATURE_ZSTD)
+ 
+ /* Are all features in the given flag word currently supported? */
+ #define	DMU_STREAM_SUPPORTED(x)	(!((x) & ~DMU_BACKUP_FEATURE_MASK))
+diff --git a/include/sys/zio.h b/include/sys/zio.h
+index 46f90a062..91775b6f5 100644
+--- a/include/sys/zio.h
++++ b/include/sys/zio.h
+@@ -21,11 +21,14 @@
+ 
+ /*
+  * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+- * Copyright 2011 Nexenta Systems, Inc. All rights reserved.
+- * Copyright (c) 2012, 2018 by Delphix. All rights reserved.
+- * Copyright (c) 2013 by Saso Kiselkov. All rights reserved.
++ * Copyright (c) 2011, Nexenta Systems, Inc. All rights reserved.
++ * Copyright (c) 2012, 2018, Delphix. All rights reserved.
++ * Copyright (c) 2013, Saso Kiselkov. All rights reserved.
+  * Copyright (c) 2013, Joyent, Inc. All rights reserved.
+- * Copyright 2016 Toomas Soome <tsoome@me.com>
++ * Copyright (c) 2016, Toomas Soome. All rights reserved.
++ * Copyright (c) 2019, Allan Jude. All rights reserved.
++ * Copyright (c) 2019, Klara Inc. All rights reserved.
++ * Use is subject to license terms.
+  */
+ 
+ #ifndef _ZIO_H
+@@ -156,6 +159,7 @@ enum zio_encrypt {
+ 	(compress) == ZIO_COMPRESS_GZIP_8 ||		\
+ 	(compress) == ZIO_COMPRESS_GZIP_9 ||		\
+ 	(compress) == ZIO_COMPRESS_ZLE ||		\
++	(compress) == ZIO_COMPRESS_ZSTD ||		\
+ 	(compress) == ZIO_COMPRESS_ON ||		\
+ 	(compress) == ZIO_COMPRESS_OFF)
+ 
+@@ -329,6 +333,7 @@ struct zbookmark_phys {
+ typedef struct zio_prop {
+ 	enum zio_checksum	zp_checksum;
+ 	enum zio_compress	zp_compress;
++	uint8_t			zp_complevel;
+ 	dmu_object_type_t	zp_type;
+ 	uint8_t			zp_level;
+ 	uint8_t			zp_copies;
+@@ -621,6 +626,8 @@ extern enum zio_checksum zio_checksum_dedup_select(spa_t *spa,
+     enum zio_checksum child, enum zio_checksum parent);
+ extern enum zio_compress zio_compress_select(spa_t *spa,
+     enum zio_compress child, enum zio_compress parent);
++extern uint8_t zio_complevel_select(spa_t *spa, enum zio_compress compress,
++    uint8_t child, uint8_t parent);
+ 
+ extern void zio_suspend(spa_t *spa, zio_t *zio, zio_suspend_reason_t);
+ extern int zio_resume(spa_t *spa);
+diff --git a/include/sys/zio_compress.h b/include/sys/zio_compress.h
+index 208117eee..cfb20e2fb 100644
+--- a/include/sys/zio_compress.h
++++ b/include/sys/zio_compress.h
+@@ -20,9 +20,11 @@
+  */
+ 
+ /*
+- * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
++ * Copyright (c) 2009, Sun Microsystems Inc. All rights reserved.
++ * Copyright (c) 2015, 2016, Delphix. All rights reserved.
++ * Copyright (c) 2019, Allan Jude. All rights reserved.
++ * Copyright (c) 2019, Klara Inc. All rights reserved.
+  * Use is subject to license terms.
+- * Copyright (c) 2015, 2016 by Delphix. All rights reserved.
+  */
+ 
+ #ifndef _SYS_ZIO_COMPRESS_H
+@@ -51,15 +53,83 @@ enum zio_compress {
+ 	ZIO_COMPRESS_GZIP_9,
+ 	ZIO_COMPRESS_ZLE,
+ 	ZIO_COMPRESS_LZ4,
++	ZIO_COMPRESS_ZSTD,
+ 	ZIO_COMPRESS_FUNCTIONS
+ };
+ 
++#define	ZIO_COMPLEVEL_INHERIT	0
++#define	ZIO_COMPLEVEL_DEFAULT	255
++
++enum zio_zstd_levels {
++	ZIO_ZSTDLVL_INHERIT = 0,
++	ZIO_ZSTDLVL_1,
++#define	ZIO_ZSTD_LEVEL_MIN	ZIO_ZSTDLVL_1
++	ZIO_ZSTDLVL_2,
++	ZIO_ZSTDLVL_3,
++#define	ZIO_ZSTD_LEVEL_DEFAULT	ZIO_ZSTDLVL_3
++	ZIO_ZSTDLVL_4,
++	ZIO_ZSTDLVL_5,
++	ZIO_ZSTDLVL_6,
++	ZIO_ZSTDLVL_7,
++	ZIO_ZSTDLVL_8,
++	ZIO_ZSTDLVL_9,
++	ZIO_ZSTDLVL_10,
++	ZIO_ZSTDLVL_11,
++	ZIO_ZSTDLVL_12,
++	ZIO_ZSTDLVL_13,
++	ZIO_ZSTDLVL_14,
++	ZIO_ZSTDLVL_15,
++	ZIO_ZSTDLVL_16,
++	ZIO_ZSTDLVL_17,
++	ZIO_ZSTDLVL_18,
++	ZIO_ZSTDLVL_19,
++#define	ZIO_ZSTD_LEVEL_MAX	ZIO_ZSTDLVL_19
++#define	ZIO_ZSTDLVL_MAX		ZIO_ZSTDLVL_19
++	ZIO_ZSTDLVL_RESERVE = 101, /* Leave room for new positive levels */
++	ZIO_ZSTDLVL_FAST, /* Fast levels are negative */
++	ZIO_ZSTDLVL_FAST_1,
++#define	ZIO_ZSTD_FAST_LEVEL_DEFAULT	ZIO_ZSTDLVL_FAST_1
++	ZIO_ZSTDLVL_FAST_2,
++	ZIO_ZSTDLVL_FAST_3,
++	ZIO_ZSTDLVL_FAST_4,
++	ZIO_ZSTDLVL_FAST_5,
++	ZIO_ZSTDLVL_FAST_6,
++	ZIO_ZSTDLVL_FAST_7,
++	ZIO_ZSTDLVL_FAST_8,
++	ZIO_ZSTDLVL_FAST_9,
++	ZIO_ZSTDLVL_FAST_10,
++	ZIO_ZSTDLVL_FAST_20,
++	ZIO_ZSTDLVL_FAST_30,
++	ZIO_ZSTDLVL_FAST_40,
++	ZIO_ZSTDLVL_FAST_50,
++	ZIO_ZSTDLVL_FAST_60,
++	ZIO_ZSTDLVL_FAST_70,
++	ZIO_ZSTDLVL_FAST_80,
++	ZIO_ZSTDLVL_FAST_90,
++	ZIO_ZSTDLVL_FAST_100,
++	ZIO_ZSTDLVL_FAST_500,
++	ZIO_ZSTDLVL_FAST_1000,
++#define	ZIO_ZSTDLVL_FAST_MAX	ZIO_ZSTDLVL_FAST_1000
++	ZIO_ZSTDLVL_DEFAULT = 250, /* Allow the default level to change */
++	ZIO_ZSTDLVL_AUTO = 251, /* Reserved for future use */
++	ZIO_ZSTDLVL_LEVELS
++};
++
++/* Forward Declaration to avoid visibility problems */
++struct zio_prop;
++
+ /* Common signature for all zio compress functions. */
+ typedef size_t zio_compress_func_t(void *src, void *dst,
+     size_t s_len, size_t d_len, int);
+ /* Common signature for all zio decompress functions. */
+ typedef int zio_decompress_func_t(void *src, void *dst,
+     size_t s_len, size_t d_len, int);
++/* Common signature for all zio decompress and get level functions. */
++typedef int zio_decompresslevel_func_t(void *src, void *dst,
++    size_t s_len, size_t d_len, uint8_t *level);
++/* Common signature for all zio get-compression-level functions. */
++typedef int zio_getlevel_func_t(void *src, size_t s_len, uint8_t *level);
++
+ 
+ /*
+  * Common signature for all zio decompress functions using an ABD as input.
+@@ -76,6 +146,7 @@ typedef const struct zio_compress_info {
+ 	int				ci_level;
+ 	zio_compress_func_t		*ci_compress;
+ 	zio_decompress_func_t		*ci_decompress;
++	zio_decompresslevel_func_t	*ci_decompress_level;
+ } zio_compress_info_t;
+ 
+ extern zio_compress_info_t zio_compress_table[ZIO_COMPRESS_FUNCTIONS];
+@@ -110,11 +181,12 @@ extern int lz4_decompress_zfs(void *src, void *dst, size_t s_len, size_t d_len,
+  * Compress and decompress data if necessary.
+  */
+ extern size_t zio_compress_data(enum zio_compress c, abd_t *src, void *dst,
+-    size_t s_len);
++    size_t s_len, uint8_t level);
+ extern int zio_decompress_data(enum zio_compress c, abd_t *src, void *dst,
+-    size_t s_len, size_t d_len);
++    size_t s_len, size_t d_len, uint8_t *level);
+ extern int zio_decompress_data_buf(enum zio_compress c, void *src, void *dst,
+-    size_t s_len, size_t d_len);
++    size_t s_len, size_t d_len, uint8_t *level);
++extern int zio_compress_to_feature(enum zio_compress comp);
+ 
+ #ifdef	__cplusplus
+ }
+diff --git a/include/sys/zio_impl.h b/include/sys/zio_impl.h
+index 8ca124631..4c9985716 100644
+--- a/include/sys/zio_impl.h
++++ b/include/sys/zio_impl.h
+@@ -73,9 +73,9 @@ extern "C" {
+  * the supported transformations:
+  *
+  * Compression:
+- * ZFS supports three different flavors of compression -- gzip, lzjb, and
+- * zle. Compression occurs as part of the write pipeline and is performed
+- * in the ZIO_STAGE_WRITE_BP_INIT stage.
++ * ZFS supports five different flavors of compression -- gzip, lzjb, lz4, zle,
++ * and zstd. Compression occurs as part of the write pipeline and is
++ * performed in the ZIO_STAGE_WRITE_BP_INIT stage.
+  *
+  * Dedup:
+  * Dedup reads are handled by the ZIO_STAGE_DDT_READ_START and
 diff --git a/include/sys/zstd/Makefile.am b/include/sys/zstd/Makefile.am
 new file mode 100644
-index 00000000000..e409189914c
+index 000000000..4b377908a
 --- /dev/null
 +++ b/include/sys/zstd/Makefile.am
-@@ -0,0 +1,26 @@
+@@ -0,0 +1,27 @@
 +COMMON_H = \
 +	$(top_srcdir)/include/sys/zstd/limits.h \
 +	$(top_srcdir)/include/sys/zstd/stddef.h \
@@ -28174,6 +28653,7 @@ index 00000000000..e409189914c
 +	$(top_srcdir)/include/sys/zstd/stdio.h \
 +	$(top_srcdir)/include/sys/zstd/stdlib.h \
 +	$(top_srcdir)/include/sys/zstd/string.h \
++	$(top_srcdir)/include/sys/zstd/zstd.h \
 +	$(top_srcdir)/include/sys/zstd/zstd_kfreebsd.c \
 +	$(top_srcdir)/include/sys/zstd/zstd_kfreebsd.h \
 +	$(top_srcdir)/include/sys/zstd/zstd_kmalloc.c
@@ -28195,7 +28675,7 @@ index 00000000000..e409189914c
 +endif
 diff --git a/include/sys/zstd/limits.h b/include/sys/zstd/limits.h
 new file mode 100644
-index 00000000000..1a0f82470b5
+index 000000000..1a0f82470
 --- /dev/null
 +++ b/include/sys/zstd/limits.h
 @@ -0,0 +1,6 @@
@@ -28207,7 +28687,7 @@ index 00000000000..1a0f82470b5
 +#endif
 diff --git a/include/sys/zstd/stddef.h b/include/sys/zstd/stddef.h
 new file mode 100644
-index 00000000000..4dd8bc3c77d
+index 000000000..4dd8bc3c7
 --- /dev/null
 +++ b/include/sys/zstd/stddef.h
 @@ -0,0 +1,2 @@
@@ -28215,7 +28695,7 @@ index 00000000000..4dd8bc3c77d
 +#include "zstd_kfreebsd.h"
 diff --git a/include/sys/zstd/stdint.h b/include/sys/zstd/stdint.h
 new file mode 100644
-index 00000000000..4dd8bc3c77d
+index 000000000..4dd8bc3c7
 --- /dev/null
 +++ b/include/sys/zstd/stdint.h
 @@ -0,0 +1,2 @@
@@ -28223,7 +28703,7 @@ index 00000000000..4dd8bc3c77d
 +#include "zstd_kfreebsd.h"
 diff --git a/include/sys/zstd/stdio.h b/include/sys/zstd/stdio.h
 new file mode 100644
-index 00000000000..4dd8bc3c77d
+index 000000000..4dd8bc3c7
 --- /dev/null
 +++ b/include/sys/zstd/stdio.h
 @@ -0,0 +1,2 @@
@@ -28231,7 +28711,7 @@ index 00000000000..4dd8bc3c77d
 +#include "zstd_kfreebsd.h"
 diff --git a/include/sys/zstd/stdlib.h b/include/sys/zstd/stdlib.h
 new file mode 100644
-index 00000000000..00a03328182
+index 000000000..00a033281
 --- /dev/null
 +++ b/include/sys/zstd/stdlib.h
 @@ -0,0 +1,60 @@
@@ -28297,15 +28777,74 @@ index 00000000000..00a03328182
 +#endif /* _ZSTD_FREEBSD_STDLIB_H_ */
 diff --git a/include/sys/zstd/string.h b/include/sys/zstd/string.h
 new file mode 100644
-index 00000000000..4dd8bc3c77d
+index 000000000..4dd8bc3c7
 --- /dev/null
 +++ b/include/sys/zstd/string.h
 @@ -0,0 +1,2 @@
 +/* This file is in the public domain */
 +#include "zstd_kfreebsd.h"
+diff --git a/include/sys/zstd/zstd.h b/include/sys/zstd/zstd.h
+new file mode 100644
+index 000000000..de978fb0b
+--- /dev/null
++++ b/include/sys/zstd/zstd.h
+@@ -0,0 +1,53 @@
++/*
++ * CDDL HEADER START
++ *
++ * The contents of this file are subject to the terms of the
++ * Common Development and Distribution License, Version 1.0 only
++ * (the "License").  You may not use this file except in compliance
++ * with the License.
++ *
++ * You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
++ * or http://www.opensolaris.org/os/licensing.
++ * See the License for the specific language governing permissions
++ * and limitations under the License.
++ *
++ * When distributing Covered Code, include this CDDL HEADER in each
++ * file and include the License file at usr/src/OPENSOLARIS.LICENSE.
++ * If applicable, add the following below this CDDL HEADER, with the
++ * fields enclosed by brackets "[]" replaced with your own identifying
++ * information: Portions Copyright [yyyy] [name of copyright owner]
++ *
++ * CDDL HEADER END
++ */
++
++/*
++ * Copyright (c) 2016-2018, Klara Systems Inc. All rights reserved.
++ * Copyright (c) 2016-2018, Allan Jude. All rights reserved.
++ * Copyright (c) 2018-2019, Sebastian Gottschall. All rights reserved.
++ * Copyright (c) 2019, Michael Niewöhner. All rights reserved.
++ */
++
++#ifndef	_ZFS_ZSTD_H
++#define	_ZFS_ZSTD_H
++
++#ifdef	__cplusplus
++extern "C" {
++#endif
++
++/* (de)init for user space / kernel emulation */
++int zstd_init(void);
++void zstd_fini(void);
++
++size_t zstd_compress(void *s_start, void *d_start, size_t s_len, size_t d_len,
++    int n);
++int zstd_get_level(void *s_start, size_t s_len, uint8_t *level);
++int zstd_decompress_level(void *s_start, void *d_start, size_t s_len,
++    size_t d_len, uint8_t *level);
++int zstd_decompress(void *s_start, void *d_start, size_t s_len, size_t d_len,
++    int n);
++
++#ifdef	__cplusplus
++}
++#endif
++
++#endif /* _ZFS_ZSTD_H */
 diff --git a/include/sys/zstd/zstd_kfreebsd.c b/include/sys/zstd/zstd_kfreebsd.c
 new file mode 100644
-index 00000000000..b488fa3af30
+index 000000000..b488fa3af
 --- /dev/null
 +++ b/include/sys/zstd/zstd_kfreebsd.c
 @@ -0,0 +1,94 @@
@@ -28405,7 +28944,7 @@ index 00000000000..b488fa3af30
 +}
 diff --git a/include/sys/zstd/zstd_kfreebsd.h b/include/sys/zstd/zstd_kfreebsd.h
 new file mode 100644
-index 00000000000..48b69d02bce
+index 000000000..48b69d02b
 --- /dev/null
 +++ b/include/sys/zstd/zstd_kfreebsd.h
 @@ -0,0 +1,51 @@
@@ -28462,7 +29001,7 @@ index 00000000000..48b69d02bce
 +#endif /* ZSTD_KFREEBSD_H */
 diff --git a/include/sys/zstd/zstd_kmalloc.c b/include/sys/zstd/zstd_kmalloc.c
 new file mode 100644
-index 00000000000..0b9b8c100ac
+index 000000000..0b9b8c100
 --- /dev/null
 +++ b/include/sys/zstd/zstd_kmalloc.c
 @@ -0,0 +1,39 @@
@@ -28505,1236 +29044,8 @@ index 00000000000..0b9b8c100ac
 + * conflict with Xen's debug.c in objdir.
 + */
 +#include "debug.c"
-
-From 2a8c9bde06ef2cdefe5f37b359edf3e4a0d19536 Mon Sep 17 00:00:00 2001
-From: =?UTF-8?q?Michael=20Niew=C3=B6hner?= <foss@mniewoehner.de>
-Date: Sun, 1 Dec 2019 01:24:01 +0100
-Subject: [PATCH 3/6] Track compression level through dataset, zio, and arc
- header fields
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-
-Extend APIs that deals with compression to also pass the compression
-level.
-
-Co-authored-by: Allan Jude <allanjude@freebsd.org>
-Co-authored-by: Sebastian Gottschall <s.gottschall@dd-wrt.com>
-Co-authored-by: Michael Niewöhner <foss@mniewoehner.de>
-Signed-off-by: Allan Jude <allanjude@freebsd.org>
-Signed-off-by: Sebastian Gottschall <s.gottschall@dd-wrt.com>
-Signed-off-by: Michael Niewöhner <foss@mniewoehner.de>
----
- cmd/zdb/zdb.c              |  4 +-
- include/sys/arc.h          | 10 +++--
- include/sys/arc_impl.h     |  3 ++
- include/sys/dmu_objset.h   |  1 +
- include/sys/fs/zfs.h       |  1 +
- include/sys/spa.h          |  1 +
- include/sys/zio.h          |  3 ++
- include/sys/zio_compress.h | 20 ++++++++--
- module/zcommon/zfs_prop.c  |  5 +++
- module/zfs/arc.c           | 64 +++++++++++++++++++++++---------
- module/zfs/blkptr.c        |  2 +-
- module/zfs/dbuf.c          | 17 ++++++---
- module/zfs/dmu.c           |  6 ++-
- module/zfs/dmu_objset.c    | 19 +++++++++-
- module/zfs/dmu_recv.c      |  6 +--
- module/zfs/zcp_get.c       | 13 +++++++
- module/zfs/zfs_ioctl.c     | 28 ++++++++++++++
- module/zfs/zio.c           | 16 +++++---
- module/zfs/zio_compress.c  | 76 +++++++++++++++++++++++++++-----------
- 19 files changed, 228 insertions(+), 67 deletions(-)
-
-diff --git a/cmd/zdb/zdb.c b/cmd/zdb/zdb.c
-index 91ead1d55e5..0262d6160e3 100644
---- a/cmd/zdb/zdb.c
-+++ b/cmd/zdb/zdb.c
-@@ -6552,9 +6552,9 @@ zdb_read_block(char *thing, spa_t *spa)
- 				VERIFY0(random_get_pseudo_bytes(lbuf2, lsize));
- 
- 				if (zio_decompress_data(*cfuncp, pabd,
--				    lbuf, psize, lsize) == 0 &&
-+				    lbuf, psize, lsize, NULL) == 0 &&
- 				    zio_decompress_data(*cfuncp, pabd,
--				    lbuf2, psize, lsize) == 0 &&
-+				    lbuf2, psize, lsize, NULL) == 0 &&
- 				    bcmp(lbuf, lbuf2, lsize) == 0)
- 					break;
- 			}
-diff --git a/include/sys/arc.h b/include/sys/arc.h
-index f6dea3fbd04..79284167aba 100644
---- a/include/sys/arc.h
-+++ b/include/sys/arc.h
-@@ -245,18 +245,20 @@ void arc_convert_to_raw(arc_buf_t *buf, uint64_t dsobj, boolean_t byteorder,
- arc_buf_t *arc_alloc_buf(spa_t *spa, void *tag, arc_buf_contents_t type,
-     int32_t size);
- arc_buf_t *arc_alloc_compressed_buf(spa_t *spa, void *tag,
--    uint64_t psize, uint64_t lsize, enum zio_compress compression_type);
-+    uint64_t psize, uint64_t lsize, enum zio_compress compression_type,
-+    uint8_t complevel);
- arc_buf_t *arc_alloc_raw_buf(spa_t *spa, void *tag, uint64_t dsobj,
-     boolean_t byteorder, const uint8_t *salt, const uint8_t *iv,
-     const uint8_t *mac, dmu_object_type_t ot, uint64_t psize, uint64_t lsize,
--    enum zio_compress compression_type);
-+    enum zio_compress compression_type, uint8_t complevel);
-+uint8_t arc_get_complevel(arc_buf_t *buf);
- arc_buf_t *arc_loan_buf(spa_t *spa, boolean_t is_metadata, int size);
- arc_buf_t *arc_loan_compressed_buf(spa_t *spa, uint64_t psize, uint64_t lsize,
--    enum zio_compress compression_type);
-+    enum zio_compress compression_type, uint8_t complevel);
- arc_buf_t *arc_loan_raw_buf(spa_t *spa, uint64_t dsobj, boolean_t byteorder,
-     const uint8_t *salt, const uint8_t *iv, const uint8_t *mac,
-     dmu_object_type_t ot, uint64_t psize, uint64_t lsize,
--    enum zio_compress compression_type);
-+    enum zio_compress compression_type, uint8_t complevel);
- void arc_return_buf(arc_buf_t *buf, void *tag);
- void arc_loan_inuse_buf(arc_buf_t *buf, void *tag);
- void arc_buf_destroy(arc_buf_t *buf, void *tag);
-diff --git a/include/sys/arc_impl.h b/include/sys/arc_impl.h
-index 8eeee54c905..2a21eb98094 100644
---- a/include/sys/arc_impl.h
-+++ b/include/sys/arc_impl.h
-@@ -240,6 +240,9 @@ struct arc_buf_hdr {
- 	uint64_t		b_birth;
- 
- 	arc_buf_contents_t	b_type;
-+	uint8_t			b_complevel;
-+	uint8_t			b_reserved1; /* used for 4 byte alignment */
-+	uint16_t		b_reserved2; /* used for 4 byte alignment */
- 	arc_buf_hdr_t		*b_hash_next;
- 	arc_flags_t		b_flags;
- 
-diff --git a/include/sys/dmu_objset.h b/include/sys/dmu_objset.h
-index 9b6614e98b7..5ff0adf4d41 100644
---- a/include/sys/dmu_objset.h
-+++ b/include/sys/dmu_objset.h
-@@ -118,6 +118,7 @@ struct objset {
- 	uint64_t os_dnodesize; /* default dnode size for new objects */
- 	enum zio_checksum os_checksum;
- 	enum zio_compress os_compress;
-+	uint8_t os_complevel;
- 	uint8_t os_copies;
- 	enum zio_checksum os_dedup_checksum;
- 	boolean_t os_dedup_verify;
-diff --git a/include/sys/fs/zfs.h b/include/sys/fs/zfs.h
-index 1474e1f049d..75eec67051f 100644
---- a/include/sys/fs/zfs.h
-+++ b/include/sys/fs/zfs.h
-@@ -186,6 +186,7 @@ typedef enum {
- 	ZFS_PROP_IVSET_GUID,		/* not exposed to the user */
- 	ZFS_PROP_REDACTED,
- 	ZFS_PROP_REDACT_SNAPS,
-+	ZFS_PROP_COMPRESS_LEVEL,	/* not exposed to the user */
- 	ZFS_NUM_PROPS
- } zfs_prop_t;
- 
-diff --git a/include/sys/spa.h b/include/sys/spa.h
-index 780119e9af9..675290bff27 100644
---- a/include/sys/spa.h
-+++ b/include/sys/spa.h
-@@ -120,6 +120,7 @@ struct dsl_crypto_params;
- 
- #define	SPA_COMPRESSBITS	7
- #define	SPA_VDEVBITS		24
-+#define	SPA_COMPRESSMASK	((1U << SPA_COMPRESSBITS) - 1)
- 
- /*
-  * All SPA data is represented by 128-bit data virtual addresses (DVAs).
-diff --git a/include/sys/zio.h b/include/sys/zio.h
-index 46f90a06294..46828e9dc71 100644
---- a/include/sys/zio.h
-+++ b/include/sys/zio.h
-@@ -329,6 +329,7 @@ struct zbookmark_phys {
- typedef struct zio_prop {
- 	enum zio_checksum	zp_checksum;
- 	enum zio_compress	zp_compress;
-+	uint8_t			zp_complevel;
- 	dmu_object_type_t	zp_type;
- 	uint8_t			zp_level;
- 	uint8_t			zp_copies;
-@@ -621,6 +622,8 @@ extern enum zio_checksum zio_checksum_dedup_select(spa_t *spa,
-     enum zio_checksum child, enum zio_checksum parent);
- extern enum zio_compress zio_compress_select(spa_t *spa,
-     enum zio_compress child, enum zio_compress parent);
-+extern uint8_t zio_complevel_select(spa_t *spa, enum zio_compress compress,
-+    uint8_t child, uint8_t parent);
- 
- extern void zio_suspend(spa_t *spa, zio_t *zio, zio_suspend_reason_t);
- extern int zio_resume(spa_t *spa);
-diff --git a/include/sys/zio_compress.h b/include/sys/zio_compress.h
-index 208117eee4b..d2cf65d4fdd 100644
---- a/include/sys/zio_compress.h
-+++ b/include/sys/zio_compress.h
-@@ -54,12 +54,24 @@ enum zio_compress {
- 	ZIO_COMPRESS_FUNCTIONS
- };
- 
-+#define	ZIO_COMPLEVEL_INHERIT	0
-+#define	ZIO_COMPLEVEL_DEFAULT	255
-+
-+/* Forward Declaration to avoid visibility problems */
-+struct zio_prop;
-+
- /* Common signature for all zio compress functions. */
- typedef size_t zio_compress_func_t(void *src, void *dst,
-     size_t s_len, size_t d_len, int);
- /* Common signature for all zio decompress functions. */
- typedef int zio_decompress_func_t(void *src, void *dst,
-     size_t s_len, size_t d_len, int);
-+/* Common signature for all zio decompress and get level functions. */
-+typedef int zio_decompresslevel_func_t(void *src, void *dst,
-+    size_t s_len, size_t d_len, uint8_t *level);
-+/* Common signature for all zio get-compression-level functions. */
-+typedef int zio_getlevel_func_t(void *src, size_t s_len, uint8_t *level);
-+
- 
- /*
-  * Common signature for all zio decompress functions using an ABD as input.
-@@ -76,6 +88,7 @@ typedef const struct zio_compress_info {
- 	int				ci_level;
- 	zio_compress_func_t		*ci_compress;
- 	zio_decompress_func_t		*ci_decompress;
-+	zio_decompresslevel_func_t	*ci_decompress_level;
- } zio_compress_info_t;
- 
- extern zio_compress_info_t zio_compress_table[ZIO_COMPRESS_FUNCTIONS];
-@@ -110,11 +123,12 @@ extern int lz4_decompress_zfs(void *src, void *dst, size_t s_len, size_t d_len,
-  * Compress and decompress data if necessary.
-  */
- extern size_t zio_compress_data(enum zio_compress c, abd_t *src, void *dst,
--    size_t s_len);
-+    size_t s_len, uint8_t level);
- extern int zio_decompress_data(enum zio_compress c, abd_t *src, void *dst,
--    size_t s_len, size_t d_len);
-+    size_t s_len, size_t d_len, uint8_t *level);
- extern int zio_decompress_data_buf(enum zio_compress c, void *src, void *dst,
--    size_t s_len, size_t d_len);
-+    size_t s_len, size_t d_len, uint8_t *level);
-+extern int zio_compress_to_feature(enum zio_compress comp);
- 
- #ifdef	__cplusplus
- }
-diff --git a/module/zcommon/zfs_prop.c b/module/zcommon/zfs_prop.c
-index 506a9bdfe60..1de27b67655 100644
---- a/module/zcommon/zfs_prop.c
-+++ b/module/zcommon/zfs_prop.c
-@@ -23,6 +23,7 @@
-  * Copyright (c) 2011, 2018 by Delphix. All rights reserved.
-  * Copyright (c) 2013 by Saso Kiselkov. All rights reserved.
-  * Copyright 2016, Joyent, Inc.
-+ * Portions Copyright (c) 2019 by Klara Inc.
-  */
- 
- /* Portions Copyright 2010 Robert Milkowski */
-@@ -608,6 +609,10 @@ zfs_prop_init(void)
- 	zprop_register_hidden(ZFS_PROP_REMAPTXG, "remaptxg", PROP_TYPE_NUMBER,
- 	    PROP_READONLY, ZFS_TYPE_DATASET, "REMAPTXG");
- 
-+	zprop_register_impl(ZFS_PROP_COMPRESS_LEVEL, "compress_level",
-+	    PROP_TYPE_NUMBER, ZIO_COMPLEVEL_INHERIT, NULL, PROP_INHERIT,
-+	    ZFS_TYPE_DATASET, "<level>", "COMPLEVEL", B_TRUE,
-+	    B_FALSE, NULL);
- 	/* oddball properties */
- 	zprop_register_impl(ZFS_PROP_CREATION, "creation", PROP_TYPE_NUMBER, 0,
- 	    NULL, PROP_READONLY, ZFS_TYPE_DATASET | ZFS_TYPE_BOOKMARK,
-diff --git a/module/zfs/arc.c b/module/zfs/arc.c
-index 8fa8c91ac49..97bd19d0512 100644
---- a/module/zfs/arc.c
-+++ b/module/zfs/arc.c
-@@ -25,6 +25,7 @@
-  * Copyright (c) 2014 by Saso Kiselkov. All rights reserved.
-  * Copyright 2017 Nexenta Systems, Inc.  All rights reserved.
-  * Copyright (c) 2019, loli10K <ezomori.nozomu@gmail.com>. All rights reserved.
-+ * Portions Copyright (c) 2019 by Klara Inc.
-  */
- 
- /*
-@@ -1246,6 +1247,12 @@ arc_hdr_get_compress(arc_buf_hdr_t *hdr)
- 	    HDR_GET_COMPRESS(hdr) : ZIO_COMPRESS_OFF);
- }
- 
-+uint8_t
-+arc_get_complevel(arc_buf_t *buf)
-+{
-+	return (buf->b_hdr->b_complevel);
-+}
-+
- static inline boolean_t
- arc_buf_is_shared(arc_buf_t *buf)
- {
-@@ -1627,9 +1634,8 @@ arc_hdr_authenticate(arc_buf_hdr_t *hdr, spa_t *spa, uint64_t dsobj)
- 		tmpbuf = zio_buf_alloc(lsize);
- 		abd = abd_get_from_buf(tmpbuf, lsize);
- 		abd_take_ownership_of_buf(abd, B_TRUE);
--
- 		csize = zio_compress_data(HDR_GET_COMPRESS(hdr),
--		    hdr->b_l1hdr.b_pabd, tmpbuf, lsize);
-+		    hdr->b_l1hdr.b_pabd, tmpbuf, lsize, hdr->b_complevel);
- 		ASSERT3U(csize, <=, psize);
- 		abd_zero_off(abd, csize, psize - csize);
- 	}
-@@ -1715,7 +1721,7 @@ arc_hdr_decrypt(arc_buf_hdr_t *hdr, spa_t *spa, const zbookmark_phys_t *zb)
- 
- 		ret = zio_decompress_data(HDR_GET_COMPRESS(hdr),
- 		    hdr->b_l1hdr.b_pabd, tmp, HDR_GET_PSIZE(hdr),
--		    HDR_GET_LSIZE(hdr));
-+		    HDR_GET_LSIZE(hdr), &hdr->b_complevel);
- 		if (ret != 0) {
- 			abd_return_buf(cabd, tmp, arc_hdr_size(hdr));
- 			goto error;
-@@ -1962,7 +1968,8 @@ arc_buf_fill(arc_buf_t *buf, spa_t *spa, const zbookmark_phys_t *zb,
- 		} else {
- 			error = zio_decompress_data(HDR_GET_COMPRESS(hdr),
- 			    hdr->b_l1hdr.b_pabd, buf->b_data,
--			    HDR_GET_PSIZE(hdr), HDR_GET_LSIZE(hdr));
-+			    HDR_GET_PSIZE(hdr), HDR_GET_LSIZE(hdr),
-+			    &hdr->b_complevel);
- 
- 			/*
- 			 * Absent hardware errors or software bugs, this should
-@@ -2701,10 +2708,10 @@ arc_loan_buf(spa_t *spa, boolean_t is_metadata, int size)
- 
- arc_buf_t *
- arc_loan_compressed_buf(spa_t *spa, uint64_t psize, uint64_t lsize,
--    enum zio_compress compression_type)
-+    enum zio_compress compression_type, uint8_t complevel)
- {
- 	arc_buf_t *buf = arc_alloc_compressed_buf(spa, arc_onloan_tag,
--	    psize, lsize, compression_type);
-+	    psize, lsize, compression_type, complevel);
- 
- 	arc_loaned_bytes_update(arc_buf_size(buf));
- 
-@@ -2715,10 +2722,11 @@ arc_buf_t *
- arc_loan_raw_buf(spa_t *spa, uint64_t dsobj, boolean_t byteorder,
-     const uint8_t *salt, const uint8_t *iv, const uint8_t *mac,
-     dmu_object_type_t ot, uint64_t psize, uint64_t lsize,
--    enum zio_compress compression_type)
-+    enum zio_compress compression_type, uint8_t complevel)
- {
- 	arc_buf_t *buf = arc_alloc_raw_buf(spa, arc_onloan_tag, dsobj,
--	    byteorder, salt, iv, mac, ot, psize, lsize, compression_type);
-+	    byteorder, salt, iv, mac, ot, psize, lsize, compression_type,
-+	    complevel);
- 
- 	atomic_add_64(&arc_loaned_bytes, psize);
- 	return (buf);
-@@ -3081,7 +3089,7 @@ arc_hdr_free_abd(arc_buf_hdr_t *hdr, boolean_t free_rdata)
- 
- static arc_buf_hdr_t *
- arc_hdr_alloc(uint64_t spa, int32_t psize, int32_t lsize,
--    boolean_t protected, enum zio_compress compression_type,
-+    boolean_t protected, enum zio_compress compression_type, uint8_t complevel,
-     arc_buf_contents_t type, boolean_t alloc_rdata)
- {
- 	arc_buf_hdr_t *hdr;
-@@ -3102,6 +3110,7 @@ arc_hdr_alloc(uint64_t spa, int32_t psize, int32_t lsize,
- 	hdr->b_flags = 0;
- 	arc_hdr_set_flags(hdr, arc_bufc_to_flags(type) | ARC_FLAG_HAS_L1HDR);
- 	arc_hdr_set_compress(hdr, compression_type);
-+	hdr->b_complevel = complevel;
- 	if (protected)
- 		arc_hdr_set_flags(hdr, ARC_FLAG_PROTECTED);
- 
-@@ -3404,7 +3413,7 @@ arc_buf_t *
- arc_alloc_buf(spa_t *spa, void *tag, arc_buf_contents_t type, int32_t size)
- {
- 	arc_buf_hdr_t *hdr = arc_hdr_alloc(spa_load_guid(spa), size, size,
--	    B_FALSE, ZIO_COMPRESS_OFF, type, B_FALSE);
-+	    B_FALSE, ZIO_COMPRESS_OFF, 0, type, B_FALSE);
- 
- 	arc_buf_t *buf = NULL;
- 	VERIFY0(arc_buf_alloc_impl(hdr, spa, NULL, tag, B_FALSE, B_FALSE,
-@@ -3420,7 +3429,7 @@ arc_alloc_buf(spa_t *spa, void *tag, arc_buf_contents_t type, int32_t size)
-  */
- arc_buf_t *
- arc_alloc_compressed_buf(spa_t *spa, void *tag, uint64_t psize, uint64_t lsize,
--    enum zio_compress compression_type)
-+    enum zio_compress compression_type, uint8_t complevel)
- {
- 	ASSERT3U(lsize, >, 0);
- 	ASSERT3U(lsize, >=, psize);
-@@ -3428,7 +3437,7 @@ arc_alloc_compressed_buf(spa_t *spa, void *tag, uint64_t psize, uint64_t lsize,
- 	ASSERT3U(compression_type, <, ZIO_COMPRESS_FUNCTIONS);
- 
- 	arc_buf_hdr_t *hdr = arc_hdr_alloc(spa_load_guid(spa), psize, lsize,
--	    B_FALSE, compression_type, ARC_BUFC_DATA, B_FALSE);
-+	    B_FALSE, compression_type, complevel, ARC_BUFC_DATA, B_FALSE);
- 
- 	arc_buf_t *buf = NULL;
- 	VERIFY0(arc_buf_alloc_impl(hdr, spa, NULL, tag, B_FALSE,
-@@ -3454,7 +3463,7 @@ arc_buf_t *
- arc_alloc_raw_buf(spa_t *spa, void *tag, uint64_t dsobj, boolean_t byteorder,
-     const uint8_t *salt, const uint8_t *iv, const uint8_t *mac,
-     dmu_object_type_t ot, uint64_t psize, uint64_t lsize,
--    enum zio_compress compression_type)
-+    enum zio_compress compression_type, uint8_t complevel)
- {
- 	arc_buf_hdr_t *hdr;
- 	arc_buf_t *buf;
-@@ -3467,7 +3476,7 @@ arc_alloc_raw_buf(spa_t *spa, void *tag, uint64_t dsobj, boolean_t byteorder,
- 	ASSERT3U(compression_type, <, ZIO_COMPRESS_FUNCTIONS);
- 
- 	hdr = arc_hdr_alloc(spa_load_guid(spa), psize, lsize, B_TRUE,
--	    compression_type, type, B_TRUE);
-+	    compression_type, complevel, type, B_TRUE);
- 
- 	hdr->b_crypt_hdr.b_dsobj = dsobj;
- 	hdr->b_crypt_hdr.b_ot = ot;
-@@ -5340,6 +5349,9 @@ arc_read_done(zio_t *zio)
- 		} else {
- 			hdr->b_l1hdr.b_byteswap = DMU_BSWAP_NUMFUNCS;
- 		}
-+		if (!HDR_L2_READING(hdr)) {
-+			hdr->b_complevel = zio->io_prop.zp_complevel;
-+		}
- 	}
- 
- 	arc_hdr_clear_flags(hdr, ARC_FLAG_L2_EVICTED);
-@@ -5715,7 +5727,7 @@ arc_read(zio_t *pio, spa_t *spa, const blkptr_t *bp,
- 			arc_buf_hdr_t *exists = NULL;
- 			arc_buf_contents_t type = BP_GET_BUFC_TYPE(bp);
- 			hdr = arc_hdr_alloc(spa_load_guid(spa), psize, lsize,
--			    BP_IS_PROTECTED(bp), BP_GET_COMPRESS(bp), type,
-+			    BP_IS_PROTECTED(bp), BP_GET_COMPRESS(bp), 0, type,
- 			    encrypted_read);
- 
- 			if (!embedded_bp) {
-@@ -6269,7 +6281,7 @@ arc_release(arc_buf_t *buf, void *tag)
- 		 * buffer which will be freed in arc_write().
- 		 */
- 		nhdr = arc_hdr_alloc(spa, psize, lsize, protected,
--		    compress, type, HDR_HAS_RABD(hdr));
-+		    compress, hdr->b_complevel, type, HDR_HAS_RABD(hdr));
- 		ASSERT3P(nhdr->b_l1hdr.b_buf, ==, NULL);
- 		ASSERT0(nhdr->b_l1hdr.b_bufcnt);
- 		ASSERT0(zfs_refcount_count(&nhdr->b_l1hdr.b_refcnt));
-@@ -6433,6 +6445,7 @@ arc_write_ready(zio_t *zio)
- 	}
- 	HDR_SET_PSIZE(hdr, psize);
- 	arc_hdr_set_compress(hdr, compress);
-+	hdr->b_complevel = zio->io_prop.zp_complevel;
- 
- 	if (zio->io_error != 0 || psize == 0)
- 		goto out;
-@@ -6621,6 +6634,7 @@ arc_write(zio_t *pio, spa_t *spa, uint64_t txg,
- 		ASSERT(ARC_BUF_COMPRESSED(buf));
- 		localprop.zp_encrypt = B_TRUE;
- 		localprop.zp_compress = HDR_GET_COMPRESS(hdr);
-+		localprop.zp_complevel = hdr->b_complevel;
- 		localprop.zp_byteorder =
- 		    (hdr->b_l1hdr.b_byteswap == DMU_BSWAP_NUMFUNCS) ?
- 		    ZFS_HOST_BYTEORDER : !ZFS_HOST_BYTEORDER;
-@@ -6639,6 +6653,7 @@ arc_write(zio_t *pio, spa_t *spa, uint64_t txg,
- 	} else if (ARC_BUF_COMPRESSED(buf)) {
- 		ASSERT3U(HDR_GET_LSIZE(hdr), !=, arc_buf_size(buf));
- 		localprop.zp_compress = HDR_GET_COMPRESS(hdr);
-+		localprop.zp_complevel = hdr->b_complevel;
- 		zio_flags |= ZIO_FLAG_RAW_COMPRESS;
- 	}
- 	callback = kmem_zalloc(sizeof (arc_write_callback_t), KM_SLEEP);
-@@ -7757,7 +7772,7 @@ l2arc_untransform(zio_t *zio, l2arc_read_callback_t *cb)
- 
- 		ret = zio_decompress_data(HDR_GET_COMPRESS(hdr),
- 		    hdr->b_l1hdr.b_pabd, tmp, HDR_GET_PSIZE(hdr),
--		    HDR_GET_LSIZE(hdr));
-+		    HDR_GET_LSIZE(hdr), &hdr->b_complevel);
- 		if (ret != 0) {
- 			abd_return_buf_copy(cabd, tmp, arc_hdr_size(hdr));
- 			arc_free_data_abd(hdr, cabd, arc_hdr_size(hdr), hdr);
-@@ -7856,6 +7871,7 @@ l2arc_read_done(zio_t *zio)
- 	    (HDR_HAS_RABD(hdr) && zio->io_abd == hdr->b_crypt_hdr.b_rabd));
- 	zio->io_bp_copy = cb->l2rcb_bp;	/* XXX fix in L2ARC 2.0	*/
- 	zio->io_bp = &zio->io_bp_copy;	/* XXX fix in L2ARC 2.0	*/
-+	zio->io_prop.zp_complevel = hdr->b_complevel;
- 
- 	valid_cksum = arc_cksum_is_equal(hdr, zio);
- 
-@@ -8128,7 +8144,19 @@ l2arc_apply_transforms(spa_t *spa, arc_buf_hdr_t *hdr, uint64_t asize,
- 		cabd = abd_alloc_for_io(asize, ismd);
- 		tmp = abd_borrow_buf(cabd, asize);
- 
--		psize = zio_compress_data(compress, to_write, tmp, size);
-+		psize = zio_compress_data(compress, to_write, tmp, size,
-+		    hdr->b_complevel);
-+
-+		if (psize >= size) {
-+			HDR_SET_COMPRESS(hdr, ZIO_COMPRESS_OFF);
-+			to_write = abd_alloc_for_io(asize, ismd);
-+			abd_copy(to_write, hdr->b_l1hdr.b_pabd, size);
-+			if (size != asize)
-+				abd_zero_off(to_write, size, asize - size);
-+			if (cabd != NULL)
-+				abd_free(cabd);
-+			goto out;
-+		}
- 		ASSERT3U(psize, <=, HDR_GET_PSIZE(hdr));
- 		if (psize < asize)
- 			bzero((char *)tmp + psize, asize - psize);
-diff --git a/module/zfs/blkptr.c b/module/zfs/blkptr.c
-index ee24b1c312d..7e8e3a702ae 100644
---- a/module/zfs/blkptr.c
-+++ b/module/zfs/blkptr.c
-@@ -142,7 +142,7 @@ decode_embedded_bp(const blkptr_t *bp, void *buf, int buflen)
- 		uint8_t dstbuf[BPE_PAYLOAD_SIZE];
- 		decode_embedded_bp_compressed(bp, dstbuf);
- 		VERIFY0(zio_decompress_data_buf(BP_GET_COMPRESS(bp),
--		    dstbuf, buf, psize, buflen));
-+		    dstbuf, buf, psize, buflen, NULL));
- 	} else {
- 		ASSERT3U(lsize, ==, psize);
- 		decode_embedded_bp_compressed(bp, buf);
-diff --git a/module/zfs/dbuf.c b/module/zfs/dbuf.c
-index d460f9922a2..b9f71141cdd 100644
---- a/module/zfs/dbuf.c
-+++ b/module/zfs/dbuf.c
-@@ -1502,6 +1502,7 @@ dbuf_fix_old_data(dmu_buf_impl_t *db, uint64_t txg)
- 		spa_t *spa = db->db_objset->os_spa;
- 		enum zio_compress compress_type =
- 		    arc_get_compression(db->db_buf);
-+		uint8_t complevel = arc_get_complevel(db->db_buf);
- 
- 		if (arc_is_encrypted(db->db_buf)) {
- 			boolean_t byteorder;
-@@ -1514,11 +1515,12 @@ dbuf_fix_old_data(dmu_buf_impl_t *db, uint64_t txg)
- 			dr->dt.dl.dr_data = arc_alloc_raw_buf(spa, db,
- 			    dmu_objset_id(dn->dn_objset), byteorder, salt, iv,
- 			    mac, dn->dn_type, size, arc_buf_lsize(db->db_buf),
--			    compress_type);
-+			    compress_type, complevel);
- 		} else if (compress_type != ZIO_COMPRESS_OFF) {
- 			ASSERT3U(type, ==, ARC_BUFC_DATA);
- 			dr->dt.dl.dr_data = arc_alloc_compressed_buf(spa, db,
--			    size, arc_buf_lsize(db->db_buf), compress_type);
-+			    size, arc_buf_lsize(db->db_buf), compress_type,
-+			    complevel);
- 		} else {
- 			dr->dt.dl.dr_data = arc_alloc_buf(spa, db, type, size);
- 		}
-@@ -3219,6 +3221,7 @@ dbuf_hold_copy(dnode_t *dn, dmu_buf_impl_t *db)
- 	dbuf_dirty_record_t *dr = db->db_data_pending;
- 	arc_buf_t *data = dr->dt.dl.dr_data;
- 	enum zio_compress compress_type = arc_get_compression(data);
-+	uint8_t complevel = arc_get_complevel(data);
- 
- 	if (arc_is_encrypted(data)) {
- 		boolean_t byteorder;
-@@ -3230,11 +3233,11 @@ dbuf_hold_copy(dnode_t *dn, dmu_buf_impl_t *db)
- 		dbuf_set_data(db, arc_alloc_raw_buf(dn->dn_objset->os_spa, db,
- 		    dmu_objset_id(dn->dn_objset), byteorder, salt, iv, mac,
- 		    dn->dn_type, arc_buf_size(data), arc_buf_lsize(data),
--		    compress_type));
-+		    compress_type, complevel));
- 	} else if (compress_type != ZIO_COMPRESS_OFF) {
- 		dbuf_set_data(db, arc_alloc_compressed_buf(
- 		    dn->dn_objset->os_spa, db, arc_buf_size(data),
--		    arc_buf_lsize(data), compress_type));
-+		    arc_buf_lsize(data), compress_type, complevel));
- 	} else {
- 		dbuf_set_data(db, arc_alloc_buf(dn->dn_objset->os_spa, db,
- 		    DBUF_GET_BUFC_TYPE(db), db->db.db_size));
-@@ -4039,6 +4042,7 @@ dbuf_sync_leaf(dbuf_dirty_record_t *dr, dmu_tx_t *tx)
- 		int lsize = arc_buf_lsize(*datap);
- 		arc_buf_contents_t type = DBUF_GET_BUFC_TYPE(db);
- 		enum zio_compress compress_type = arc_get_compression(*datap);
-+		uint8_t complevel = arc_get_complevel(*datap);
- 
- 		if (arc_is_encrypted(*datap)) {
- 			boolean_t byteorder;
-@@ -4049,11 +4053,12 @@ dbuf_sync_leaf(dbuf_dirty_record_t *dr, dmu_tx_t *tx)
- 			arc_get_raw_params(*datap, &byteorder, salt, iv, mac);
- 			*datap = arc_alloc_raw_buf(os->os_spa, db,
- 			    dmu_objset_id(os), byteorder, salt, iv, mac,
--			    dn->dn_type, psize, lsize, compress_type);
-+			    dn->dn_type, psize, lsize, compress_type,
-+			    complevel);
- 		} else if (compress_type != ZIO_COMPRESS_OFF) {
- 			ASSERT3U(type, ==, ARC_BUFC_DATA);
- 			*datap = arc_alloc_compressed_buf(os->os_spa, db,
--			    psize, lsize, compress_type);
-+			    psize, lsize, compress_type, complevel);
- 		} else {
- 			*datap = arc_alloc_buf(os->os_spa, db, type, psize);
- 		}
-diff --git a/module/zfs/dmu.c b/module/zfs/dmu.c
-index b7fe0f5c0d8..d99aed1991f 100644
---- a/module/zfs/dmu.c
-+++ b/module/zfs/dmu.c
-@@ -1584,7 +1584,8 @@ dmu_copy_from_buf(objset_t *os, uint64_t object, uint64_t offset,
- 		abuf = arc_loan_raw_buf(os->os_spa, dmu_objset_id(os),
- 		    byteorder, salt, iv, mac, type,
- 		    datalen, arc_buf_lsize(srcdb->db_buf),
--		    arc_get_compression(srcdb->db_buf));
-+		    arc_get_compression(srcdb->db_buf),
-+		    arc_get_complevel(srcdb->db_buf));
- 	} else {
- 		/* we won't get a compressed db back from dmu_buf_hold() */
- 		ASSERT3U(arc_get_compression(srcdb->db_buf),
-@@ -2111,6 +2112,7 @@ dmu_write_policy(objset_t *os, dnode_t *dn, int level, int wp, zio_prop_t *zp)
- 	    (wp & WP_SPILL));
- 	enum zio_checksum checksum = os->os_checksum;
- 	enum zio_compress compress = os->os_compress;
-+	uint8_t complevel = os->os_complevel;
- 	enum zio_checksum dedup_checksum = os->os_dedup_checksum;
- 	boolean_t dedup = B_FALSE;
- 	boolean_t nopwrite = B_FALSE;
-@@ -2225,6 +2227,7 @@ dmu_write_policy(objset_t *os, dnode_t *dn, int level, int wp, zio_prop_t *zp)
- 	}
- 
- 	zp->zp_compress = compress;
-+	zp->zp_complevel = complevel;
- 	zp->zp_checksum = checksum;
- 	zp->zp_type = (wp & WP_SPILL) ? dn->dn_bonustype : type;
- 	zp->zp_level = level;
-@@ -2241,6 +2244,7 @@ dmu_write_policy(objset_t *os, dnode_t *dn, int level, int wp, zio_prop_t *zp)
- 	    os->os_zpl_special_smallblock : 0;
- 
- 	ASSERT3U(zp->zp_compress, !=, ZIO_COMPRESS_INHERIT);
-+	ASSERT3U(zp->zp_complevel, !=, ZIO_COMPLEVEL_INHERIT);
- }
- 
- /*
-diff --git a/module/zfs/dmu_objset.c b/module/zfs/dmu_objset.c
-index 2a9464e2a2c..4966f8da566 100644
---- a/module/zfs/dmu_objset.c
-+++ b/module/zfs/dmu_objset.c
-@@ -193,8 +193,17 @@ compression_changed_cb(void *arg, uint64_t newval)
- 	 */
- 	ASSERT(newval != ZIO_COMPRESS_INHERIT);
- 
--	os->os_compress = zio_compress_select(os->os_spa, newval,
--	    ZIO_COMPRESS_ON);
-+	os->os_compress = zio_compress_select(os->os_spa,
-+	    newval & SPA_COMPRESSMASK, ZIO_COMPRESS_ON);
-+}
-+
-+static void
-+compress_level_changed_cb(void *arg, uint64_t newval)
-+{
-+	objset_t *os = arg;
-+
-+	os->os_complevel = zio_complevel_select(os->os_spa, os->os_compress,
-+	    newval, ZIO_COMPLEVEL_DEFAULT);
- }
- 
- static void
-@@ -536,6 +545,11 @@ dmu_objset_open_impl(spa_t *spa, dsl_dataset_t *ds, blkptr_t *bp,
- 				    zfs_prop_to_name(ZFS_PROP_COMPRESSION),
- 				    compression_changed_cb, os);
- 			}
-+			if (err == 0) {
-+				err = dsl_prop_register(ds,
-+				    zfs_prop_to_name(ZFS_PROP_COMPRESS_LEVEL),
-+				    compress_level_changed_cb, os);
-+			}
- 			if (err == 0) {
- 				err = dsl_prop_register(ds,
- 				    zfs_prop_to_name(ZFS_PROP_COPIES),
-@@ -590,6 +604,7 @@ dmu_objset_open_impl(spa_t *spa, dsl_dataset_t *ds, blkptr_t *bp,
- 		/* It's the meta-objset. */
- 		os->os_checksum = ZIO_CHECKSUM_FLETCHER_4;
- 		os->os_compress = ZIO_COMPRESS_ON;
-+		os->os_complevel = ZIO_COMPLEVEL_DEFAULT;
- 		os->os_encrypted = B_FALSE;
- 		os->os_copies = spa_max_replication(spa);
- 		os->os_dedup_checksum = ZIO_CHECKSUM_OFF;
-diff --git a/module/zfs/dmu_recv.c b/module/zfs/dmu_recv.c
-index f68419bfae6..dde3213e1b6 100644
---- a/module/zfs/dmu_recv.c
-+++ b/module/zfs/dmu_recv.c
-@@ -2255,7 +2255,7 @@ receive_read_record(dmu_recv_cookie_t *drc)
- 			    drrw->drr_object, byteorder, drrw->drr_salt,
- 			    drrw->drr_iv, drrw->drr_mac, drrw->drr_type,
- 			    drrw->drr_compressed_size, drrw->drr_logical_size,
--			    drrw->drr_compressiontype);
-+			    drrw->drr_compressiontype, 0);
- 		} else if (DRR_WRITE_COMPRESSED(drrw)) {
- 			ASSERT3U(drrw->drr_compressed_size, >, 0);
- 			ASSERT3U(drrw->drr_logical_size, >=,
-@@ -2264,7 +2264,7 @@ receive_read_record(dmu_recv_cookie_t *drc)
- 			abuf = arc_loan_compressed_buf(
- 			    dmu_objset_spa(drc->drc_os),
- 			    drrw->drr_compressed_size, drrw->drr_logical_size,
--			    drrw->drr_compressiontype);
-+			    drrw->drr_compressiontype, 0);
- 		} else {
- 			abuf = arc_loan_buf(dmu_objset_spa(drc->drc_os),
- 			    is_meta, drrw->drr_logical_size);
-@@ -2339,7 +2339,7 @@ receive_read_record(dmu_recv_cookie_t *drc)
- 			    drrs->drr_object, byteorder, drrs->drr_salt,
- 			    drrs->drr_iv, drrs->drr_mac, drrs->drr_type,
- 			    drrs->drr_compressed_size, drrs->drr_length,
--			    drrs->drr_compressiontype);
-+			    drrs->drr_compressiontype, 0);
- 		} else {
- 			abuf = arc_loan_buf(dmu_objset_spa(drc->drc_os),
- 			    DMU_OT_IS_METADATA(drrs->drr_type),
-diff --git a/module/zfs/zcp_get.c b/module/zfs/zcp_get.c
-index 44c4e82c257..504df0d4307 100644
---- a/module/zfs/zcp_get.c
-+++ b/module/zfs/zcp_get.c
-@@ -230,6 +230,7 @@ get_special_prop(lua_State *state, dsl_dataset_t *ds, const char *dsname,
- 	char setpoint[ZFS_MAX_DATASET_NAME_LEN] =
- 	    "Internal error - setpoint not determined";
- 	zfs_type_t ds_type;
-+	const char *prop_name = zfs_prop_to_name(zfs_prop);
- 	zprop_type_t prop_type = zfs_prop_get_type(zfs_prop);
- 	(void) get_objset_type(ds, &ds_type);
- 
-@@ -407,7 +408,19 @@ get_special_prop(lua_State *state, dsl_dataset_t *ds, const char *dsname,
- 		nvlist_free(nvl);
- 		break;
- 	}
-+	case ZFS_PROP_COMPRESSION:
-+		uint64_t levelval;
-+		const char *complevel_name =
-+		    zfs_prop_to_name(ZFS_PROP_COMPRESS_LEVEL);
- 
-+		error = dsl_prop_get_ds(ds, complevel_name,
-+		    sizeof (levelval), 1, &levelval, setpoint);
-+		if (error == 0) {
-+			if (levelval == ZIO_COMPLEVEL_DEFAULT)
-+				break;
-+			numval |= levelval << SPA_COMPRESSBITS;
-+		}
-+		break;
- 	default:
- 		/* Did not match these props, check in the dsl_dir */
- 		error = get_dsl_dir_prop(ds, zfs_prop, &numval);
-diff --git a/module/zfs/zfs_ioctl.c b/module/zfs/zfs_ioctl.c
-index 2c1f0aab692..395d5a9fc17 100644
---- a/module/zfs/zfs_ioctl.c
-+++ b/module/zfs/zfs_ioctl.c
-@@ -2041,6 +2041,34 @@ zfs_ioc_vdev_setfru(zfs_cmd_t *zc)
- 	return (error);
- }
- 
-+static int
-+get_prop_uint64(nvlist_t *nv, const char *prop, nvlist_t **nvp,
-+    uint64_t *val)
-+{
-+	int err = 0;
-+	nvlist_t *subnv;
-+	nvpair_t *pair;
-+	nvpair_t *propval;
-+
-+	if (nvlist_lookup_nvpair(nv, prop, &pair) != 0)
-+		return (EINVAL);
-+
-+	/* decode the property value */
-+	propval = pair;
-+	if (nvpair_type(pair) == DATA_TYPE_NVLIST) {
-+		subnv = fnvpair_value_nvlist(pair);
-+		if (nvp != NULL)
-+			*nvp = subnv;
-+		if (nvlist_lookup_nvpair(subnv, ZPROP_VALUE, &propval) != 0)
-+			err = EINVAL;
-+	}
-+	if (nvpair_type(propval) == DATA_TYPE_UINT64) {
-+		*val = fnvpair_value_uint64(propval);
-+	}
-+
-+	return (err);
-+}
-+
- static int
- zfs_ioc_objset_stats_impl(zfs_cmd_t *zc, objset_t *os)
- {
-diff --git a/module/zfs/zio.c b/module/zfs/zio.c
-index c0b93346da1..788913e5bf0 100644
---- a/module/zfs/zio.c
-+++ b/module/zfs/zio.c
-@@ -407,7 +407,8 @@ zio_decompress(zio_t *zio, abd_t *data, uint64_t size)
- 	if (zio->io_error == 0) {
- 		void *tmp = abd_borrow_buf(data, size);
- 		int ret = zio_decompress_data(BP_GET_COMPRESS(zio->io_bp),
--		    zio->io_abd, tmp, zio->io_size, size);
-+		    zio->io_abd, tmp, zio->io_size, size,
-+		    &zio->io_prop.zp_complevel);
- 		abd_return_buf_copy(data, tmp, size);
- 
- 		if (zio_injection_enabled && ret == 0)
-@@ -457,7 +458,8 @@ zio_decrypt(zio_t *zio, abd_t *data, uint64_t size)
- 			 */
- 			tmp = zio_buf_alloc(lsize);
- 			ret = zio_decompress_data(BP_GET_COMPRESS(bp),
--			    zio->io_abd, tmp, zio->io_size, lsize);
-+			    zio->io_abd, tmp, zio->io_size, lsize,
-+			    &zio->io_prop.zp_complevel);
- 			if (ret != 0) {
- 				ret = SET_ERROR(EIO);
- 				goto error;
-@@ -1616,8 +1618,9 @@ zio_write_compress(zio_t *zio)
- 	if (compress != ZIO_COMPRESS_OFF &&
- 	    !(zio->io_flags & ZIO_FLAG_RAW_COMPRESS)) {
- 		void *cbuf = zio_buf_alloc(lsize);
--		psize = zio_compress_data(compress, zio->io_abd, cbuf, lsize);
--		if (psize == 0 || psize == lsize) {
-+		psize = zio_compress_data(compress, zio->io_abd, cbuf, lsize,
-+		    zp->zp_complevel);
-+		if (psize == 0 || psize >= lsize) {
- 			compress = ZIO_COMPRESS_OFF;
- 			zio_buf_free(cbuf, lsize);
- 		} else if (!zp->zp_dedup && !zp->zp_encrypt &&
-@@ -1679,8 +1682,8 @@ zio_write_compress(zio_t *zio)
- 		 * to a hole.
- 		 */
- 		psize = zio_compress_data(ZIO_COMPRESS_EMPTY,
--		    zio->io_abd, NULL, lsize);
--		if (psize == 0)
-+		    zio->io_abd, NULL, lsize, zp->zp_complevel);
-+		if (psize == 0 || psize >= lsize)
- 			compress = ZIO_COMPRESS_OFF;
- 	} else {
- 		ASSERT3U(psize, !=, 0);
-@@ -2695,6 +2698,7 @@ zio_write_gang_block(zio_t *pio)
- 
- 		zp.zp_checksum = gio->io_prop.zp_checksum;
- 		zp.zp_compress = ZIO_COMPRESS_OFF;
-+		zp.zp_complevel = gio->io_prop.zp_complevel;
- 		zp.zp_type = DMU_OT_NONE;
- 		zp.zp_level = 0;
- 		zp.zp_copies = gio->io_prop.zp_copies;
-diff --git a/module/zfs/zio_compress.c b/module/zfs/zio_compress.c
-index 01c51347fec..160dfbd3c76 100644
---- a/module/zfs/zio_compress.c
-+++ b/module/zfs/zio_compress.c
-@@ -47,24 +47,39 @@ unsigned long zio_decompress_fail_fraction = 0;
-  * Compression vectors.
-  */
- zio_compress_info_t zio_compress_table[ZIO_COMPRESS_FUNCTIONS] = {
--	{"inherit",		0,	NULL,		NULL},
--	{"on",			0,	NULL,		NULL},
--	{"uncompressed",	0,	NULL,		NULL},
--	{"lzjb",		0,	lzjb_compress,	lzjb_decompress},
--	{"empty",		0,	NULL,		NULL},
--	{"gzip-1",		1,	gzip_compress,	gzip_decompress},
--	{"gzip-2",		2,	gzip_compress,	gzip_decompress},
--	{"gzip-3",		3,	gzip_compress,	gzip_decompress},
--	{"gzip-4",		4,	gzip_compress,	gzip_decompress},
--	{"gzip-5",		5,	gzip_compress,	gzip_decompress},
--	{"gzip-6",		6,	gzip_compress,	gzip_decompress},
--	{"gzip-7",		7,	gzip_compress,	gzip_decompress},
--	{"gzip-8",		8,	gzip_compress,	gzip_decompress},
--	{"gzip-9",		9,	gzip_compress,	gzip_decompress},
--	{"zle",			64,	zle_compress,	zle_decompress},
--	{"lz4",			0,	lz4_compress_zfs, lz4_decompress_zfs}
-+	{"inherit",	0,	NULL,		NULL, NULL},
-+	{"on",		0,	NULL,		NULL, NULL},
-+	{"uncompressed", 0,	NULL,		NULL, NULL},
-+	{"lzjb",	0,	lzjb_compress,	lzjb_decompress, NULL},
-+	{"empty",	0,	NULL,		NULL, NULL},
-+	{"gzip-1",	1,	gzip_compress,	gzip_decompress, NULL},
-+	{"gzip-2",	2,	gzip_compress,	gzip_decompress, NULL},
-+	{"gzip-3",	3,	gzip_compress,	gzip_decompress, NULL},
-+	{"gzip-4",	4,	gzip_compress,	gzip_decompress, NULL},
-+	{"gzip-5",	5,	gzip_compress,	gzip_decompress, NULL},
-+	{"gzip-6",	6,	gzip_compress,	gzip_decompress, NULL},
-+	{"gzip-7",	7,	gzip_compress,	gzip_decompress, NULL},
-+	{"gzip-8",	8,	gzip_compress,	gzip_decompress, NULL},
-+	{"gzip-9",	9,	gzip_compress,	gzip_decompress, NULL},
-+	{"zle",		64,	zle_compress,	zle_decompress, NULL},
-+	{"lz4",		0,	lz4_compress_zfs, lz4_decompress_zfs, NULL},
-+	{"zstd",	ZIO_ZSTD_LEVEL_DEFAULT,	zstd_compress, zstd_decompress,
-+	    zstd_decompress_level},
- };
- 
-+uint8_t
-+zio_complevel_select(spa_t *spa, enum zio_compress compress, uint8_t child,
-+    uint8_t parent)
-+{
-+	uint8_t result;
-+
-+	result = child;
-+	if (result == ZIO_ZSTDLVL_INHERIT)
-+		result = parent;
-+
-+	return (result);
-+}
-+
- enum zio_compress
- zio_compress_select(spa_t *spa, enum zio_compress child,
-     enum zio_compress parent)
-@@ -102,9 +117,11 @@ zio_compress_zeroed_cb(void *data, size_t len, void *private)
- }
- 
- size_t
--zio_compress_data(enum zio_compress c, abd_t *src, void *dst, size_t s_len)
-+zio_compress_data(enum zio_compress c, abd_t *src, void *dst, size_t s_len,
-+    uint8_t level)
- {
- 	size_t c_len, d_len;
-+	uint8_t complevel;
- 	zio_compress_info_t *ci = &zio_compress_table[c];
- 
- 	ASSERT((uint_t)c < ZIO_COMPRESS_FUNCTIONS);
-@@ -123,9 +140,11 @@ zio_compress_data(enum zio_compress c, abd_t *src, void *dst, size_t s_len)
- 	/* Compress at least 12.5% */
- 	d_len = s_len - (s_len >> 3);
- 
-+	complevel = ci->ci_level;
-+
- 	/* No compression algorithms can read from ABDs directly */
- 	void *tmp = abd_borrow_buf_copy(src, s_len);
--	c_len = ci->ci_compress(tmp, dst, s_len, d_len, ci->ci_level);
-+	c_len = ci->ci_compress(tmp, dst, s_len, d_len, complevel);
- 	abd_return_buf(src, tmp, s_len);
- 
- 	if (c_len > d_len)
-@@ -137,21 +156,24 @@ zio_compress_data(enum zio_compress c, abd_t *src, void *dst, size_t s_len)
- 
- int
- zio_decompress_data_buf(enum zio_compress c, void *src, void *dst,
--    size_t s_len, size_t d_len)
-+    size_t s_len, size_t d_len, uint8_t *level)
- {
- 	zio_compress_info_t *ci = &zio_compress_table[c];
- 	if ((uint_t)c >= ZIO_COMPRESS_FUNCTIONS || ci->ci_decompress == NULL)
- 		return (SET_ERROR(EINVAL));
- 
-+	if (ci->ci_decompress_level != NULL && level != NULL)
-+		return (ci->ci_decompress_level(src, dst, s_len, d_len, level));
-+
- 	return (ci->ci_decompress(src, dst, s_len, d_len, ci->ci_level));
- }
- 
- int
- zio_decompress_data(enum zio_compress c, abd_t *src, void *dst,
--    size_t s_len, size_t d_len)
-+    size_t s_len, size_t d_len, uint8_t *level)
- {
- 	void *tmp = abd_borrow_buf_copy(src, s_len);
--	int ret = zio_decompress_data_buf(c, tmp, dst, s_len, d_len);
-+	int ret = zio_decompress_data_buf(c, tmp, dst, s_len, d_len, level);
- 	abd_return_buf(src, tmp, s_len);
- 
- 	/*
-@@ -165,3 +187,15 @@ zio_decompress_data(enum zio_compress c, abd_t *src, void *dst,
- 
- 	return (ret);
- }
-+
-+int
-+zio_compress_to_feature(enum zio_compress comp)
-+{
-+	switch (comp) {
-+	case ZIO_COMPRESS_ZSTD:
-+		return (SPA_FEATURE_ZSTD_COMPRESS);
-+	default:
-+		/* fallthru */;
-+	}
-+	return (SPA_FEATURE_NONE);
-+}
-
-From 31c24f717bea6ea8bac791cc5297f4ddc0fe179f Mon Sep 17 00:00:00 2001
-From: =?UTF-8?q?Michael=20Niew=C3=B6hner?= <foss@mniewoehner.de>
-Date: Sun, 1 Dec 2019 12:35:29 +0100
-Subject: [PATCH 4/6] Add zstd support to zfs
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-
-Closes: #6247
-Co-authored-by: Allan Jude <allanjude@freebsd.org>
-Co-authored-by: Sebastian Gottschall <s.gottschall@dd-wrt.com>
-Co-authored-by: Michael Niewöhner <foss@mniewoehner.de>
-Signed-off-by: Allan Jude <allanjude@freebsd.org>
-Signed-off-by: Sebastian Gottschall <s.gottschall@dd-wrt.com>
-Signed-off-by: Michael Niewöhner <foss@mniewoehner.de>
----
- cmd/dbufstat/dbufstat            |   2 +-
- configure.ac                     |   1 +
- contrib/zstd/.gitignore          |   1 +
- copy-builtin                     |  10 +-
- include/sys/zfs_ioctl.h          |   4 +-
- include/sys/zio.h                |   1 +
- include/sys/zio_compress.h       |  56 +++
- include/sys/zio_impl.h           |   6 +-
- include/sys/zstd/Makefile.am     |   1 +
- include/sys/zstd/zstd.h          |  53 +++
- include/zfeature_common.h        |   1 +
- module/Makefile.in               |   2 +
- module/zcommon/zfeature_common.c |   9 +
- module/zcommon/zfs_prop.c        |  99 ++++-
- module/zfs/dmu_recv.c            |   7 +
- module/zfs/dmu_send.c            |   8 +
- module/zfs/dsl_dataset.c         |  11 +-
- module/zfs/spa_misc.c            |   7 +
- module/zfs/zcp_get.c             |  10 +-
- module/zfs/zfs_ioctl.c           |  62 ++++
- module/zfs/zio_compress.c        |  14 +
- module/zstd/Makefile.in          |  57 +++
- module/zstd/zstd.c               | 609 +++++++++++++++++++++++++++++++
- scripts/Makefile.am              |   1 +
- scripts/dkms.mkconf              |   4 +
- scripts/zfs.sh                   |  12 +-
- 26 files changed, 1031 insertions(+), 17 deletions(-)
- create mode 100644 contrib/zstd/.gitignore
- create mode 100644 include/sys/zstd/zstd.h
- create mode 100644 module/zstd/Makefile.in
- create mode 100644 module/zstd/zstd.c
-
-diff --git a/cmd/dbufstat/dbufstat b/cmd/dbufstat/dbufstat
-index 4a57d811301..be41ae1c655 100755
---- a/cmd/dbufstat/dbufstat
-+++ b/cmd/dbufstat/dbufstat
-@@ -343,7 +343,7 @@ def get_compstring(c):
-                     "ZIO_COMPRESS_GZIP_6",  "ZIO_COMPRESS_GZIP_7",
-                     "ZIO_COMPRESS_GZIP_8",  "ZIO_COMPRESS_GZIP_9",
-                     "ZIO_COMPRESS_ZLE",     "ZIO_COMPRESS_LZ4",
--                    "ZIO_COMPRESS_FUNCTION"]
-+                    "ZIO_COMPRESS_ZSTD",    "ZIO_COMPRESS_FUNCTION"]
- 
-     # If "-rr" option is used, don't convert to string representation
-     if raw > 1:
-diff --git a/configure.ac b/configure.ac
-index 8f24072bf5e..390d4060d13 100644
---- a/configure.ac
-+++ b/configure.ac
-@@ -173,6 +173,7 @@ AC_CONFIG_FILES([
- 	module/unicode/Makefile
- 	module/zcommon/Makefile
- 	module/zfs/Makefile
-+	module/zstd/Makefile
- 	rpm/Makefile
- 	rpm/generic/Makefile
- 	rpm/generic/zfs-dkms.spec
-diff --git a/contrib/zstd/.gitignore b/contrib/zstd/.gitignore
-new file mode 100644
-index 00000000000..bae5d2bb0ad
---- /dev/null
-+++ b/contrib/zstd/.gitignore
-@@ -0,0 +1 @@
-+*.o.cmd
-diff --git a/copy-builtin b/copy-builtin
-index ee3b081cae0..e067b397b20 100755
---- a/copy-builtin
-+++ b/copy-builtin
-@@ -41,6 +41,8 @@ scripts/make_gitrev.sh || true
- rm -rf "$KERNEL_DIR/include/zfs" "$KERNEL_DIR/fs/zfs"
- cp --recursive include "$KERNEL_DIR/include/zfs"
- cp --recursive module "$KERNEL_DIR/fs/zfs"
-+mkdir "$KERNEL_DIR/fs/zfs/contrib"
-+cp --recursive contrib/zstd "$KERNEL_DIR/fs/zfs/contrib"
- cp zfs_config.h "$KERNEL_DIR/include/zfs/"
- 
- for MODULE in "${MODULES[@]}"
-@@ -72,10 +74,16 @@ EOF
- 	ZFS_MODULE_CFLAGS += -I$(srctree)/include/zfs/os/linux/zfs
- 	ZFS_MODULE_CFLAGS += -I$(srctree)/include/zfs/os/linux/kernel
- 	ZFS_MODULE_CFLAGS += -include $(srctree)/include/zfs/zfs_config.h
-+	ZFS_MODULE_CFLAGS += -I$(srctree)/fs/zfs/contrib/zstd
-+	ZFS_MODULE_CFLAGS += -I$(srctree)/fs/zfs/contrib/zstd/common
-+	ZFS_MODULE_CFLAGS += -I$(srctree)/fs/zfs/contrib/zstd/compress
-+	ZFS_MODULE_CFLAGS += -I$(srctree)/fs/zfs/contrib/zstd/decompress
-+	ZFS_MODULE_CFLAGS += -I$(srctree)/include/zfs/sys/zstd
- 	ZFS_MODULE_CFLAGS += -std=gnu99 -Wno-declaration-after-statement
- 	ZFS_MODULE_CPPFLAGS  = -D_KERNEL
- 	ZFS_MODULE_CPPFLAGS += -UDEBUG -DNDEBUG
--	export ZFS_MODULE_CFLAGS ZFS_MODULE_CPPFLAGS
-+	ZSTD_PATH = ../contrib/zstd
-+	export ZFS_MODULE_CFLAGS ZFS_MODULE_CPPFLAGS ZSTD_PATH
- 
- 	obj-$(CONFIG_ZFS) :=
- 	EOF
-diff --git a/include/sys/zfs_ioctl.h b/include/sys/zfs_ioctl.h
-index da5a3ee60df..e49c14405f0 100644
---- a/include/sys/zfs_ioctl.h
-+++ b/include/sys/zfs_ioctl.h
-@@ -105,7 +105,7 @@ typedef enum drr_headertype {
- #define	DMU_BACKUP_FEATURE_COMPRESSED		(1 << 22)
- #define	DMU_BACKUP_FEATURE_LARGE_DNODE		(1 << 23)
- #define	DMU_BACKUP_FEATURE_RAW			(1 << 24)
--/* flag #25 is reserved for the ZSTD compression feature */
-+#define	DMU_BACKUP_FEATURE_ZSTD			(1 << 25)
- #define	DMU_BACKUP_FEATURE_HOLDS		(1 << 26)
- 
- /*
-@@ -117,7 +117,7 @@ typedef enum drr_headertype {
-     DMU_BACKUP_FEATURE_RESUMING | DMU_BACKUP_FEATURE_LARGE_BLOCKS | \
-     DMU_BACKUP_FEATURE_COMPRESSED | DMU_BACKUP_FEATURE_LARGE_DNODE | \
-     DMU_BACKUP_FEATURE_RAW | DMU_BACKUP_FEATURE_HOLDS | \
--	DMU_BACKUP_FEATURE_REDACTED)
-+    DMU_BACKUP_FEATURE_REDACTED | DMU_BACKUP_FEATURE_ZSTD)
- 
- /* Are all features in the given flag word currently supported? */
- #define	DMU_STREAM_SUPPORTED(x)	(!((x) & ~DMU_BACKUP_FEATURE_MASK))
-diff --git a/include/sys/zio.h b/include/sys/zio.h
-index 46828e9dc71..0e5b956450e 100644
---- a/include/sys/zio.h
-+++ b/include/sys/zio.h
-@@ -156,6 +156,7 @@ enum zio_encrypt {
- 	(compress) == ZIO_COMPRESS_GZIP_8 ||		\
- 	(compress) == ZIO_COMPRESS_GZIP_9 ||		\
- 	(compress) == ZIO_COMPRESS_ZLE ||		\
-+	(compress) == ZIO_COMPRESS_ZSTD ||		\
- 	(compress) == ZIO_COMPRESS_ON ||		\
- 	(compress) == ZIO_COMPRESS_OFF)
- 
-diff --git a/include/sys/zio_compress.h b/include/sys/zio_compress.h
-index d2cf65d4fdd..3b4340f21ee 100644
---- a/include/sys/zio_compress.h
-+++ b/include/sys/zio_compress.h
-@@ -51,12 +51,68 @@ enum zio_compress {
- 	ZIO_COMPRESS_GZIP_9,
- 	ZIO_COMPRESS_ZLE,
- 	ZIO_COMPRESS_LZ4,
-+	ZIO_COMPRESS_ZSTD,
- 	ZIO_COMPRESS_FUNCTIONS
- };
- 
- #define	ZIO_COMPLEVEL_INHERIT	0
- #define	ZIO_COMPLEVEL_DEFAULT	255
- 
-+enum zio_zstd_levels {
-+	ZIO_ZSTDLVL_INHERIT = 0,
-+	ZIO_ZSTDLVL_1,
-+#define	ZIO_ZSTD_LEVEL_MIN	ZIO_ZSTDLVL_1
-+	ZIO_ZSTDLVL_2,
-+	ZIO_ZSTDLVL_3,
-+#define	ZIO_ZSTD_LEVEL_DEFAULT	ZIO_ZSTDLVL_3
-+	ZIO_ZSTDLVL_4,
-+	ZIO_ZSTDLVL_5,
-+	ZIO_ZSTDLVL_6,
-+	ZIO_ZSTDLVL_7,
-+	ZIO_ZSTDLVL_8,
-+	ZIO_ZSTDLVL_9,
-+	ZIO_ZSTDLVL_10,
-+	ZIO_ZSTDLVL_11,
-+	ZIO_ZSTDLVL_12,
-+	ZIO_ZSTDLVL_13,
-+	ZIO_ZSTDLVL_14,
-+	ZIO_ZSTDLVL_15,
-+	ZIO_ZSTDLVL_16,
-+	ZIO_ZSTDLVL_17,
-+	ZIO_ZSTDLVL_18,
-+	ZIO_ZSTDLVL_19,
-+#define	ZIO_ZSTD_LEVEL_MAX	ZIO_ZSTDLVL_19
-+#define	ZIO_ZSTDLVL_MAX		ZIO_ZSTDLVL_19
-+	ZIO_ZSTDLVL_RESERVE = 101, /* Leave room for new positive levels */
-+	ZIO_ZSTDLVL_FAST, /* Fast levels are negative */
-+	ZIO_ZSTDLVL_FAST_1,
-+#define	ZIO_ZSTD_FAST_LEVEL_DEFAULT	ZIO_ZSTDLVL_FAST_1
-+	ZIO_ZSTDLVL_FAST_2,
-+	ZIO_ZSTDLVL_FAST_3,
-+	ZIO_ZSTDLVL_FAST_4,
-+	ZIO_ZSTDLVL_FAST_5,
-+	ZIO_ZSTDLVL_FAST_6,
-+	ZIO_ZSTDLVL_FAST_7,
-+	ZIO_ZSTDLVL_FAST_8,
-+	ZIO_ZSTDLVL_FAST_9,
-+	ZIO_ZSTDLVL_FAST_10,
-+	ZIO_ZSTDLVL_FAST_20,
-+	ZIO_ZSTDLVL_FAST_30,
-+	ZIO_ZSTDLVL_FAST_40,
-+	ZIO_ZSTDLVL_FAST_50,
-+	ZIO_ZSTDLVL_FAST_60,
-+	ZIO_ZSTDLVL_FAST_70,
-+	ZIO_ZSTDLVL_FAST_80,
-+	ZIO_ZSTDLVL_FAST_90,
-+	ZIO_ZSTDLVL_FAST_100,
-+	ZIO_ZSTDLVL_FAST_500,
-+	ZIO_ZSTDLVL_FAST_1000,
-+#define	ZIO_ZSTDLVL_FAST_MAX	ZIO_ZSTDLVL_FAST_1000
-+	ZIO_ZSTDLVL_DEFAULT = 250, /* Allow the default level to change */
-+	ZIO_ZSTDLVL_AUTO = 251, /* Reserved for future use */
-+	ZIO_ZSTDLVL_LEVELS
-+};
-+
- /* Forward Declaration to avoid visibility problems */
- struct zio_prop;
- 
-diff --git a/include/sys/zio_impl.h b/include/sys/zio_impl.h
-index 8ca12463176..4c998571653 100644
---- a/include/sys/zio_impl.h
-+++ b/include/sys/zio_impl.h
-@@ -73,9 +73,9 @@ extern "C" {
-  * the supported transformations:
-  *
-  * Compression:
-- * ZFS supports three different flavors of compression -- gzip, lzjb, and
-- * zle. Compression occurs as part of the write pipeline and is performed
-- * in the ZIO_STAGE_WRITE_BP_INIT stage.
-+ * ZFS supports five different flavors of compression -- gzip, lzjb, lz4, zle,
-+ * and zstd. Compression occurs as part of the write pipeline and is
-+ * performed in the ZIO_STAGE_WRITE_BP_INIT stage.
-  *
-  * Dedup:
-  * Dedup reads are handled by the ZIO_STAGE_DDT_READ_START and
-diff --git a/include/sys/zstd/Makefile.am b/include/sys/zstd/Makefile.am
-index e409189914c..4b377908a86 100644
---- a/include/sys/zstd/Makefile.am
-+++ b/include/sys/zstd/Makefile.am
-@@ -5,6 +5,7 @@ COMMON_H = \
- 	$(top_srcdir)/include/sys/zstd/stdio.h \
- 	$(top_srcdir)/include/sys/zstd/stdlib.h \
- 	$(top_srcdir)/include/sys/zstd/string.h \
-+	$(top_srcdir)/include/sys/zstd/zstd.h \
- 	$(top_srcdir)/include/sys/zstd/zstd_kfreebsd.c \
- 	$(top_srcdir)/include/sys/zstd/zstd_kfreebsd.h \
- 	$(top_srcdir)/include/sys/zstd/zstd_kmalloc.c
-diff --git a/include/sys/zstd/zstd.h b/include/sys/zstd/zstd.h
-new file mode 100644
-index 00000000000..de978fb0be4
---- /dev/null
-+++ b/include/sys/zstd/zstd.h
-@@ -0,0 +1,53 @@
-+/*
-+ * CDDL HEADER START
-+ *
-+ * The contents of this file are subject to the terms of the
-+ * Common Development and Distribution License, Version 1.0 only
-+ * (the "License").  You may not use this file except in compliance
-+ * with the License.
-+ *
-+ * You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
-+ * or http://www.opensolaris.org/os/licensing.
-+ * See the License for the specific language governing permissions
-+ * and limitations under the License.
-+ *
-+ * When distributing Covered Code, include this CDDL HEADER in each
-+ * file and include the License file at usr/src/OPENSOLARIS.LICENSE.
-+ * If applicable, add the following below this CDDL HEADER, with the
-+ * fields enclosed by brackets "[]" replaced with your own identifying
-+ * information: Portions Copyright [yyyy] [name of copyright owner]
-+ *
-+ * CDDL HEADER END
-+ */
-+
-+/*
-+ * Copyright (c) 2016-2018, Klara Systems Inc. All rights reserved.
-+ * Copyright (c) 2016-2018, Allan Jude. All rights reserved.
-+ * Copyright (c) 2018-2019, Sebastian Gottschall. All rights reserved.
-+ * Copyright (c) 2019, Michael Niewöhner. All rights reserved.
-+ */
-+
-+#ifndef	_ZFS_ZSTD_H
-+#define	_ZFS_ZSTD_H
-+
-+#ifdef	__cplusplus
-+extern "C" {
-+#endif
-+
-+/* (de)init for user space / kernel emulation */
-+int zstd_init(void);
-+void zstd_fini(void);
-+
-+size_t zstd_compress(void *s_start, void *d_start, size_t s_len, size_t d_len,
-+    int n);
-+int zstd_get_level(void *s_start, size_t s_len, uint8_t *level);
-+int zstd_decompress_level(void *s_start, void *d_start, size_t s_len,
-+    size_t d_len, uint8_t *level);
-+int zstd_decompress(void *s_start, void *d_start, size_t s_len, size_t d_len,
-+    int n);
-+
-+#ifdef	__cplusplus
-+}
-+#endif
-+
-+#endif /* _ZFS_ZSTD_H */
 diff --git a/include/zfeature_common.h b/include/zfeature_common.h
-index 2d8767d5b9a..d33c0d7c258 100644
+index 2d8767d5b..d33c0d7c2 100644
 --- a/include/zfeature_common.h
 +++ b/include/zfeature_common.h
 @@ -74,6 +74,7 @@ typedef enum spa_feature {
@@ -29745,8 +29056,244 @@ index 2d8767d5b9a..d33c0d7c258 100644
  	SPA_FEATURES
  } spa_feature_t;
  
+diff --git a/lib/Makefile.am b/lib/Makefile.am
+index 8dff773df..5ad690fae 100644
+--- a/lib/Makefile.am
++++ b/lib/Makefile.am
+@@ -2,6 +2,9 @@
+ # These six libraries are intermediary build components.
+ SUBDIRS = libavl libefi libicp libshare libspl libtpool libzutil libunicode
+ 
++# zstd intermediary build component
++SUBDIRS += libzstd
++
+ # These four libraries, which are installed as the final build product,
+ # incorporate the six convenience libraries given above.
+ SUBDIRS += libuutil libnvpair libzpool libzfs_core libzfs
+diff --git a/lib/libzpool/Makefile.am b/lib/libzpool/Makefile.am
+index 7b1ae098d..c3d6fd888 100644
+--- a/lib/libzpool/Makefile.am
++++ b/lib/libzpool/Makefile.am
+@@ -195,7 +195,8 @@ libzpool_la_LIBADD = \
+ 	$(top_builddir)/lib/libicp/libicp.la \
+ 	$(top_builddir)/lib/libnvpair/libnvpair.la \
+ 	$(top_builddir)/lib/libunicode/libunicode.la \
+-	$(top_builddir)/lib/libzutil/libzutil.la
++	$(top_builddir)/lib/libzutil/libzutil.la \
++	$(top_builddir)/lib/libzstd/libzstd.la
+ 
+ libzpool_la_LIBADD += $(ZLIB) -ldl
+ libzpool_la_LDFLAGS = -pthread -version-info 2:0:0
+diff --git a/lib/libzstd/Makefile.am b/lib/libzstd/Makefile.am
+new file mode 100644
+index 000000000..02690113d
+--- /dev/null
++++ b/lib/libzstd/Makefile.am
+@@ -0,0 +1,45 @@
++include $(top_srcdir)/config/Rules.am
++
++VPATH = \
++	$(top_srcdir)/contrib/zstd \
++	$(top_srcdir)/contrib/zstd/common \
++	$(top_srcdir)/contrib/zstd/compress \
++	$(top_srcdir)/contrib/zstd/decompress \
++	$(top_srcdir)/module/zstd
++
++DEFAULT_INCLUDES += \
++	-I$(top_srcdir)/contrib/zstd \
++	-I$(top_srcdir)/contrib/zstd/common \
++	-I$(top_srcdir)/contrib/zstd/compress \
++	-I$(top_srcdir)/contrib/zstd/decompress
++
++noinst_LTLIBRARIES = libzstd.la
++
++KERNEL_C = \
++	zstd_common.c \
++	fse_decompress.c \
++	entropy_common.c \
++	xxhash.c \
++	hist.c \
++	error_private.c \
++	zstd_compress.c \
++	zstd_compress_literals.c \
++	zstd_compress_sequences.c \
++	fse_compress.c \
++	huf_compress.c \
++	zstd_double_fast.c \
++	zstd_fast.c \
++	zstd_lazy.c \
++	zstd_ldm.c \
++	zstd_opt.c \
++	zstd_ddict.c \
++	zstd_decompress.c \
++	zstd_decompress_block.c \
++	huf_decompress.c \
++	zstd.c
++
++nodist_libzstd_la_SOURCES = $(KERNEL_C)
++
++# -fno-tree-vectorize gets set for gcc in zstd/common/compiler.h
++# Set it for other compilers, too.
++CFLAGS_zstd_decompress_block.o := -fno-tree-vectorize
+diff --git a/man/man5/zpool-features.5 b/man/man5/zpool-features.5
+index b9a739d5b..61a5e67fa 100644
+--- a/man/man5/zpool-features.5
++++ b/man/man5/zpool-features.5
+@@ -1,7 +1,4 @@
+ '\" te
+-.\" Copyright (c) 2012, 2018 by Delphix. All rights reserved.
+-.\" Copyright (c) 2013 by Saso Kiselkov. All rights reserved.
+-.\" Copyright (c) 2014, Joyent, Inc. All rights reserved.
+ .\" The contents of this file are subject to the terms of the Common Development
+ .\" and Distribution License (the "License").  You may not use this file except
+ .\" in compliance with the License. You can obtain a copy of the license at
+@@ -14,6 +11,11 @@
+ .\" CDDL HEADER, with the fields enclosed by brackets "[]" replaced with your
+ .\" own identifying information:
+ .\" Portions Copyright [yyyy] [name of copyright owner]
++.\" Copyright (c) 2012, 2018, Delphix. All rights reserved.
++.\" Copyright (c) 2013, Saso Kiselkov. All rights reserved.
++.\" Copyright (c) 2014, Joyent Inc. All rights reserved.
++.\" Copyright (c) 2019, Klara Inc. All rights reserved.
++.\" Copyright (c) 2019, Allan Jude. All rights reserved.
+ .TH ZPOOL-FEATURES 5 "Jun 8, 2018"
+ .SH NAME
+ zpool\-features \- ZFS pool feature descriptions
+@@ -926,6 +928,42 @@ This feature becomes \fBactive\fR when the \fBzpool checkpoint\fR subcommand
+ is used to checkpoint the pool.
+ The feature will only return back to being \fBenabled\fR when the pool
+ is rewound or the checkpoint has been discarded.
++.RE
++
++.sp
++.ne 2
++.na
++\fBzstd_compress\fR
++.ad
++.RS 4n
++.TS
++l l .
++GUID	org.freebsd:zstd_compress
++READ\-ONLY COMPATIBLE	no
++DEPENDENCIES	none
++.TE
++
++\fBzstd\fR is a high-performance compression algorithm that features a
++combination of high compression ratios and high speed. Compared to \fBgzip\fR,
++\fBzstd\fR offers slighty better compression at much higher speeds. Compared
++to \fBlz4\fR, \fBzstd\fR offers much better compression while being only
++modestly slower. Typically, \fBzstd\fR compression speed ranges from 250 to 500
++MB/s per thread and decompression speed is over 1 GB/s per thread.
++
++When the \fBzstd\fR feature is set to \fBenabled\fR, the administrator can turn
++on \fBzstd\fR compression of any dataset by running
++`zfs set compress=zstd <pool/fs>`.
++
++This feature becomes \fBactive\fR once a \fBcompress\fR property has been set to
++\fBzstd\fR, and will return to being \fBenabled\fR once all filesystems that
++have ever had their compress property set to \fBzstd\fR are destroyed.
++
++Booting off of \fBzstd\fR-compressed root pools is not yet supported.
++
++Sending a \fBzstd\fR dataset to a non-\fBzstd zpool\fR by \fBzfs send -e\fR is
++not possible and will result in an error. Either drop the \fB-e\fR option or
++enable \fBzstd\fR on the receiver \fBzpool\fR.
++.RE
+ 
+ .SH "SEE ALSO"
+ zpool(8)
+diff --git a/man/man8/zfsprops.8 b/man/man8/zfsprops.8
+index da3280a9f..890a80268 100644
+--- a/man/man8/zfsprops.8
++++ b/man/man8/zfsprops.8
+@@ -19,23 +19,22 @@
+ .\" CDDL HEADER END
+ .\"
+ .\"
+-.\" Copyright (c) 2009 Sun Microsystems, Inc. All Rights Reserved.
+-.\" Copyright 2011 Joshua M. Clulow <josh@sysmgr.org>
+-.\" Copyright (c) 2011, 2019 by Delphix. All rights reserved.
+-.\" Copyright (c) 2011, Pawel Jakub Dawidek <pjd@FreeBSD.org>
+-.\" Copyright (c) 2012, Glen Barber <gjb@FreeBSD.org>
+-.\" Copyright (c) 2012, Bryan Drewery <bdrewery@FreeBSD.org>
+-.\" Copyright (c) 2013, Steven Hartland <smh@FreeBSD.org>
+-.\" Copyright (c) 2013 by Saso Kiselkov. All rights reserved.
+-.\" Copyright (c) 2014, Joyent, Inc. All rights reserved.
+-.\" Copyright (c) 2014 by Adam Stevko. All rights reserved.
+-.\" Copyright (c) 2014 Integros [integros.com]
+-.\" Copyright (c) 2016 Nexenta Systems, Inc. All Rights Reserved.
+-.\" Copyright (c) 2014, Xin LI <delphij@FreeBSD.org>
+-.\" Copyright (c) 2014-2015, The FreeBSD Foundation, All Rights Reserved.
+-.\" Copyright 2019 Richard Laager. All rights reserved.
+-.\" Copyright 2018 Nexenta Systems, Inc.
+-.\" Copyright 2019 Joyent, Inc.
++.\" Copyright (c) 2009, Sun Microsystems, Inc. All Rights Reserved.
++.\" Copyright (c) 2011, Joshua M. Clulow. All Rights Reserved.
++.\" Copyright (c) 2011, 2019, Delphix. All rights reserved.
++.\" Copyright (c) 2011, Pawel Jakub Dawidek. All rights reserved.
++.\" Copyright (c) 2012, Glen Barber. All rights reserved.
++.\" Copyright (c) 2012, Bryan Drewery. All rights reserved.
++.\" Copyright (c) 2013, Steven Hartland. All rights reserved.
++.\" Copyright (c) 2013, Saso Kiselkov. All rights reserved.
++.\" Copyright (c) 2014, 2019, Joyent, Inc. All rights reserved.
++.\" Copyright (c) 2014, Adam Stevko. All rights reserved.
++.\" Copyright (c) 2014, Integros. All rights reserved.
++.\" Copyright (c) 2014, Xin LI. All rights reserved.
++.\" Copyright (c) 2014-2015, The FreeBSD Foundation. All Rights Reserved.
++.\" Copyright (c) 2016, 2018, Nexenta Systems, Inc. All rights reserved.
++.\" Copyright (c) 2019, Richard Laager. All rights reserved.
++.\" Copyright (c) 2019, Kjeld Schouten-Lebbing. All rights reserved.
+ .\"
+ .Dd June 30, 2019
+ .Dt ZFSPROPS 8
+@@ -723,7 +722,8 @@ for more information on these algorithms.
+ Changing this property affects only newly-written data.
+ .It Xo
+ .Sy compression Ns = Ns Sy on Ns | Ns Sy off Ns | Ns Sy gzip Ns | Ns
+-.Sy gzip- Ns Em N Ns | Ns Sy lz4 Ns | Ns Sy lzjb Ns | Ns Sy zle
++.Sy gzip- Ns Em N Ns | Ns Sy lz4 Ns | Ns Sy lzjb Ns | Ns Sy zle Ns | Ns Sy zstd Ns | Ns
++.Sy zstd- Ns Em N Ns | Ns Sy zstd-fast- Ns Em N
+ .Xc
+ Controls the compression algorithm used for this dataset.
+ .Pp
+@@ -791,6 +791,35 @@ is equivalent to
+ .Pc .
+ .Pp
+ The
++.Sy zstd
++compression using the zstd algorithm ,
++You can specify the
++.Sy zstd
++level by using the value
++.Sy zstd- Ns Em N ,
++where
++.Em N
++is an integer from 1
++.Pq fastest
++to 19
++.Pq best compression ratio .
++.Sy zstd
++You can also specify a negative
++.Sy zstd
++level by using the value
++.Sy zstd- Ns Em N ,
++where
++.Em N
++is an integer from 100
++.Pq fastest
++to 1
++.Pq best compression ratio .
++.Sy zstd
++is equivalent to
++.Sy zstd-3
++.Pc .
++.Pp
++The
+ .Sy zle
+ compression algorithm compresses runs of zeros.
+ .Pp
 diff --git a/module/Makefile.in b/module/Makefile.in
-index 24af81aa771..1bff3b76a85 100644
+index 24af81aa7..1bff3b76a 100644
 --- a/module/Makefile.in
 +++ b/module/Makefile.in
 @@ -8,6 +8,7 @@ obj-m += unicode/
@@ -29766,10 +29313,30 @@ index 24af81aa771..1bff3b76a85 100644
  ZFS_MODULE_CPPFLAGS += @KERNEL_DEBUG_CPPFLAGS@
  
 diff --git a/module/zcommon/zfeature_common.c b/module/zcommon/zfeature_common.c
-index 15dcefd5ba5..02aaf8a0f76 100644
+index 15dcefd5b..1863b8e55 100644
 --- a/module/zcommon/zfeature_common.c
 +++ b/module/zcommon/zfeature_common.c
-@@ -559,6 +559,15 @@ zpool_feature_init(void)
+@@ -20,11 +20,14 @@
+  */
+ 
+ /*
+- * Copyright (c) 2011, 2018 by Delphix. All rights reserved.
+- * Copyright (c) 2013 by Saso Kiselkov. All rights reserved.
+- * Copyright (c) 2013, Joyent, Inc. All rights reserved.
+- * Copyright (c) 2014, Nexenta Systems, Inc. All rights reserved.
+- * Copyright (c) 2017, Intel Corporation.
++ * Copyright (c) 2011, 2018, Delphix. All rights reserved.
++ * Copyright (c) 2013, Saso Kiselkov. All rights reserved.
++ * Copyright (c) 2013, Joyent Inc. All rights reserved.
++ * Copyright (c) 2014, Nexenta Systems Inc. All rights reserved.
++ * Copyright (c) 2017, Intel Corporation. All rights reserved.
++ * Copyright (c) 2019, Klara Inc. All rights reserved.
++ * Copyright (c) 2019, Allan Jude. All rights reserved.
++ * Use is subject to license terms.
+  */
+ 
+ #ifndef _KERNEL
+@@ -559,6 +562,15 @@ zpool_feature_init(void)
  	    "com.datto:resilver_defer", "resilver_defer",
  	    "Support for deferring new resilvers when one is already running.",
  	    ZFEATURE_FLAG_READONLY_COMPAT, ZFEATURE_TYPE_BOOLEAN, NULL);
@@ -29786,10 +29353,33 @@ index 15dcefd5ba5..02aaf8a0f76 100644
  
  #if defined(_KERNEL)
 diff --git a/module/zcommon/zfs_prop.c b/module/zcommon/zfs_prop.c
-index 1de27b67655..94b2e884ee5 100644
+index 506a9bdfe..1d128ce19 100644
 --- a/module/zcommon/zfs_prop.c
 +++ b/module/zcommon/zfs_prop.c
-@@ -126,6 +126,99 @@ zfs_prop_init(void)
+@@ -18,15 +18,17 @@
+  *
+  * CDDL HEADER END
+  */
++
+ /*
+  * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+- * Copyright (c) 2011, 2018 by Delphix. All rights reserved.
+- * Copyright (c) 2013 by Saso Kiselkov. All rights reserved.
+- * Copyright 2016, Joyent, Inc.
++ * Copyright (c) 2010, Robert Milkowski. All rights reserved.
++ * Copyright (c) 2011, 2018, Delphix. All rights reserved.
++ * Copyright (c) 2013, Saso Kiselkov. All rights reserved.
++ * Copyright (c) 2016, Joyent, Inc. All rights reserved.
++ * Copyright (c) 2019, Klara Inc. All rights reserved.
++ * Use is subject to license terms.
+  */
+ 
+-/* Portions Copyright 2010 Robert Milkowski */
+-
+ #include <sys/zio.h>
+ #include <sys/spa.h>
+ #include <sys/u8_textprep.h>
+@@ -125,6 +127,99 @@ zfs_prop_init(void)
  		{ "gzip-9",	ZIO_COMPRESS_GZIP_9 },
  		{ "zle",	ZIO_COMPRESS_ZLE },
  		{ "lz4",	ZIO_COMPRESS_LZ4 },
@@ -29889,7 +29479,7 @@ index 1de27b67655..94b2e884ee5 100644
  		{ NULL }
  	};
  
-@@ -323,8 +416,10 @@ zfs_prop_init(void)
+@@ -322,8 +417,10 @@ zfs_prop_init(void)
  	zprop_register_index(ZFS_PROP_COMPRESSION, "compression",
  	    ZIO_COMPRESS_DEFAULT, PROP_INHERIT,
  	    ZFS_TYPE_FILESYSTEM | ZFS_TYPE_VOLUME,
@@ -29902,11 +29492,534 @@ index 1de27b67655..94b2e884ee5 100644
  	zprop_register_index(ZFS_PROP_SNAPDIR, "snapdir", ZFS_SNAPDIR_HIDDEN,
  	    PROP_INHERIT, ZFS_TYPE_FILESYSTEM,
  	    "hidden | visible", "SNAPDIR", snapdir_table);
+@@ -608,6 +705,10 @@ zfs_prop_init(void)
+ 	zprop_register_hidden(ZFS_PROP_REMAPTXG, "remaptxg", PROP_TYPE_NUMBER,
+ 	    PROP_READONLY, ZFS_TYPE_DATASET, "REMAPTXG");
+ 
++	zprop_register_impl(ZFS_PROP_COMPRESS_LEVEL, "compress_level",
++	    PROP_TYPE_NUMBER, ZIO_COMPLEVEL_INHERIT, NULL, PROP_INHERIT,
++	    ZFS_TYPE_DATASET, "<level>", "COMPLEVEL", B_TRUE,
++	    B_FALSE, NULL);
+ 	/* oddball properties */
+ 	zprop_register_impl(ZFS_PROP_CREATION, "creation", PROP_TYPE_NUMBER, 0,
+ 	    NULL, PROP_READONLY, ZFS_TYPE_DATASET | ZFS_TYPE_BOOKMARK,
+diff --git a/module/zfs/arc.c b/module/zfs/arc.c
+index 8fa8c91ac..9ab1b30b1 100644
+--- a/module/zfs/arc.c
++++ b/module/zfs/arc.c
+@@ -18,13 +18,15 @@
+  *
+  * CDDL HEADER END
+  */
++
+ /*
+  * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+- * Copyright (c) 2018, Joyent, Inc.
+- * Copyright (c) 2011, 2019 by Delphix. All rights reserved.
+- * Copyright (c) 2014 by Saso Kiselkov. All rights reserved.
+- * Copyright 2017 Nexenta Systems, Inc.  All rights reserved.
++ * Copyright (c) 2018, Joyent Inc. All rights reserved.
++ * Copyright (c) 2011, 2019, Delphix. All rights reserved.
++ * Copyright (c) 2014, Saso Kiselkov. All rights reserved.
++ * Copyright (c) 2017, Nexenta Systems Inc. All rights reserved.
+  * Copyright (c) 2019, loli10K <ezomori.nozomu@gmail.com>. All rights reserved.
++ * Copyright (c) 2019, Klara Inc. All rights reserved.
+  */
+ 
+ /*
+@@ -1246,6 +1248,12 @@ arc_hdr_get_compress(arc_buf_hdr_t *hdr)
+ 	    HDR_GET_COMPRESS(hdr) : ZIO_COMPRESS_OFF);
+ }
+ 
++uint8_t
++arc_get_complevel(arc_buf_t *buf)
++{
++	return (buf->b_hdr->b_complevel);
++}
++
+ static inline boolean_t
+ arc_buf_is_shared(arc_buf_t *buf)
+ {
+@@ -1627,9 +1635,8 @@ arc_hdr_authenticate(arc_buf_hdr_t *hdr, spa_t *spa, uint64_t dsobj)
+ 		tmpbuf = zio_buf_alloc(lsize);
+ 		abd = abd_get_from_buf(tmpbuf, lsize);
+ 		abd_take_ownership_of_buf(abd, B_TRUE);
+-
+ 		csize = zio_compress_data(HDR_GET_COMPRESS(hdr),
+-		    hdr->b_l1hdr.b_pabd, tmpbuf, lsize);
++		    hdr->b_l1hdr.b_pabd, tmpbuf, lsize, hdr->b_complevel);
+ 		ASSERT3U(csize, <=, psize);
+ 		abd_zero_off(abd, csize, psize - csize);
+ 	}
+@@ -1715,7 +1722,7 @@ arc_hdr_decrypt(arc_buf_hdr_t *hdr, spa_t *spa, const zbookmark_phys_t *zb)
+ 
+ 		ret = zio_decompress_data(HDR_GET_COMPRESS(hdr),
+ 		    hdr->b_l1hdr.b_pabd, tmp, HDR_GET_PSIZE(hdr),
+-		    HDR_GET_LSIZE(hdr));
++		    HDR_GET_LSIZE(hdr), &hdr->b_complevel);
+ 		if (ret != 0) {
+ 			abd_return_buf(cabd, tmp, arc_hdr_size(hdr));
+ 			goto error;
+@@ -1962,7 +1969,8 @@ arc_buf_fill(arc_buf_t *buf, spa_t *spa, const zbookmark_phys_t *zb,
+ 		} else {
+ 			error = zio_decompress_data(HDR_GET_COMPRESS(hdr),
+ 			    hdr->b_l1hdr.b_pabd, buf->b_data,
+-			    HDR_GET_PSIZE(hdr), HDR_GET_LSIZE(hdr));
++			    HDR_GET_PSIZE(hdr), HDR_GET_LSIZE(hdr),
++			    &hdr->b_complevel);
+ 
+ 			/*
+ 			 * Absent hardware errors or software bugs, this should
+@@ -2701,10 +2709,10 @@ arc_loan_buf(spa_t *spa, boolean_t is_metadata, int size)
+ 
+ arc_buf_t *
+ arc_loan_compressed_buf(spa_t *spa, uint64_t psize, uint64_t lsize,
+-    enum zio_compress compression_type)
++    enum zio_compress compression_type, uint8_t complevel)
+ {
+ 	arc_buf_t *buf = arc_alloc_compressed_buf(spa, arc_onloan_tag,
+-	    psize, lsize, compression_type);
++	    psize, lsize, compression_type, complevel);
+ 
+ 	arc_loaned_bytes_update(arc_buf_size(buf));
+ 
+@@ -2715,10 +2723,11 @@ arc_buf_t *
+ arc_loan_raw_buf(spa_t *spa, uint64_t dsobj, boolean_t byteorder,
+     const uint8_t *salt, const uint8_t *iv, const uint8_t *mac,
+     dmu_object_type_t ot, uint64_t psize, uint64_t lsize,
+-    enum zio_compress compression_type)
++    enum zio_compress compression_type, uint8_t complevel)
+ {
+ 	arc_buf_t *buf = arc_alloc_raw_buf(spa, arc_onloan_tag, dsobj,
+-	    byteorder, salt, iv, mac, ot, psize, lsize, compression_type);
++	    byteorder, salt, iv, mac, ot, psize, lsize, compression_type,
++	    complevel);
+ 
+ 	atomic_add_64(&arc_loaned_bytes, psize);
+ 	return (buf);
+@@ -3081,7 +3090,7 @@ arc_hdr_free_abd(arc_buf_hdr_t *hdr, boolean_t free_rdata)
+ 
+ static arc_buf_hdr_t *
+ arc_hdr_alloc(uint64_t spa, int32_t psize, int32_t lsize,
+-    boolean_t protected, enum zio_compress compression_type,
++    boolean_t protected, enum zio_compress compression_type, uint8_t complevel,
+     arc_buf_contents_t type, boolean_t alloc_rdata)
+ {
+ 	arc_buf_hdr_t *hdr;
+@@ -3102,6 +3111,7 @@ arc_hdr_alloc(uint64_t spa, int32_t psize, int32_t lsize,
+ 	hdr->b_flags = 0;
+ 	arc_hdr_set_flags(hdr, arc_bufc_to_flags(type) | ARC_FLAG_HAS_L1HDR);
+ 	arc_hdr_set_compress(hdr, compression_type);
++	hdr->b_complevel = complevel;
+ 	if (protected)
+ 		arc_hdr_set_flags(hdr, ARC_FLAG_PROTECTED);
+ 
+@@ -3404,7 +3414,7 @@ arc_buf_t *
+ arc_alloc_buf(spa_t *spa, void *tag, arc_buf_contents_t type, int32_t size)
+ {
+ 	arc_buf_hdr_t *hdr = arc_hdr_alloc(spa_load_guid(spa), size, size,
+-	    B_FALSE, ZIO_COMPRESS_OFF, type, B_FALSE);
++	    B_FALSE, ZIO_COMPRESS_OFF, 0, type, B_FALSE);
+ 
+ 	arc_buf_t *buf = NULL;
+ 	VERIFY0(arc_buf_alloc_impl(hdr, spa, NULL, tag, B_FALSE, B_FALSE,
+@@ -3420,7 +3430,7 @@ arc_alloc_buf(spa_t *spa, void *tag, arc_buf_contents_t type, int32_t size)
+  */
+ arc_buf_t *
+ arc_alloc_compressed_buf(spa_t *spa, void *tag, uint64_t psize, uint64_t lsize,
+-    enum zio_compress compression_type)
++    enum zio_compress compression_type, uint8_t complevel)
+ {
+ 	ASSERT3U(lsize, >, 0);
+ 	ASSERT3U(lsize, >=, psize);
+@@ -3428,7 +3438,7 @@ arc_alloc_compressed_buf(spa_t *spa, void *tag, uint64_t psize, uint64_t lsize,
+ 	ASSERT3U(compression_type, <, ZIO_COMPRESS_FUNCTIONS);
+ 
+ 	arc_buf_hdr_t *hdr = arc_hdr_alloc(spa_load_guid(spa), psize, lsize,
+-	    B_FALSE, compression_type, ARC_BUFC_DATA, B_FALSE);
++	    B_FALSE, compression_type, complevel, ARC_BUFC_DATA, B_FALSE);
+ 
+ 	arc_buf_t *buf = NULL;
+ 	VERIFY0(arc_buf_alloc_impl(hdr, spa, NULL, tag, B_FALSE,
+@@ -3454,7 +3464,7 @@ arc_buf_t *
+ arc_alloc_raw_buf(spa_t *spa, void *tag, uint64_t dsobj, boolean_t byteorder,
+     const uint8_t *salt, const uint8_t *iv, const uint8_t *mac,
+     dmu_object_type_t ot, uint64_t psize, uint64_t lsize,
+-    enum zio_compress compression_type)
++    enum zio_compress compression_type, uint8_t complevel)
+ {
+ 	arc_buf_hdr_t *hdr;
+ 	arc_buf_t *buf;
+@@ -3467,7 +3477,7 @@ arc_alloc_raw_buf(spa_t *spa, void *tag, uint64_t dsobj, boolean_t byteorder,
+ 	ASSERT3U(compression_type, <, ZIO_COMPRESS_FUNCTIONS);
+ 
+ 	hdr = arc_hdr_alloc(spa_load_guid(spa), psize, lsize, B_TRUE,
+-	    compression_type, type, B_TRUE);
++	    compression_type, complevel, type, B_TRUE);
+ 
+ 	hdr->b_crypt_hdr.b_dsobj = dsobj;
+ 	hdr->b_crypt_hdr.b_ot = ot;
+@@ -5340,6 +5350,9 @@ arc_read_done(zio_t *zio)
+ 		} else {
+ 			hdr->b_l1hdr.b_byteswap = DMU_BSWAP_NUMFUNCS;
+ 		}
++		if (!HDR_L2_READING(hdr)) {
++			hdr->b_complevel = zio->io_prop.zp_complevel;
++		}
+ 	}
+ 
+ 	arc_hdr_clear_flags(hdr, ARC_FLAG_L2_EVICTED);
+@@ -5715,7 +5728,7 @@ top:
+ 			arc_buf_hdr_t *exists = NULL;
+ 			arc_buf_contents_t type = BP_GET_BUFC_TYPE(bp);
+ 			hdr = arc_hdr_alloc(spa_load_guid(spa), psize, lsize,
+-			    BP_IS_PROTECTED(bp), BP_GET_COMPRESS(bp), type,
++			    BP_IS_PROTECTED(bp), BP_GET_COMPRESS(bp), 0, type,
+ 			    encrypted_read);
+ 
+ 			if (!embedded_bp) {
+@@ -6269,7 +6282,7 @@ arc_release(arc_buf_t *buf, void *tag)
+ 		 * buffer which will be freed in arc_write().
+ 		 */
+ 		nhdr = arc_hdr_alloc(spa, psize, lsize, protected,
+-		    compress, type, HDR_HAS_RABD(hdr));
++		    compress, hdr->b_complevel, type, HDR_HAS_RABD(hdr));
+ 		ASSERT3P(nhdr->b_l1hdr.b_buf, ==, NULL);
+ 		ASSERT0(nhdr->b_l1hdr.b_bufcnt);
+ 		ASSERT0(zfs_refcount_count(&nhdr->b_l1hdr.b_refcnt));
+@@ -6433,6 +6446,7 @@ arc_write_ready(zio_t *zio)
+ 	}
+ 	HDR_SET_PSIZE(hdr, psize);
+ 	arc_hdr_set_compress(hdr, compress);
++	hdr->b_complevel = zio->io_prop.zp_complevel;
+ 
+ 	if (zio->io_error != 0 || psize == 0)
+ 		goto out;
+@@ -6621,6 +6635,7 @@ arc_write(zio_t *pio, spa_t *spa, uint64_t txg,
+ 		ASSERT(ARC_BUF_COMPRESSED(buf));
+ 		localprop.zp_encrypt = B_TRUE;
+ 		localprop.zp_compress = HDR_GET_COMPRESS(hdr);
++		localprop.zp_complevel = hdr->b_complevel;
+ 		localprop.zp_byteorder =
+ 		    (hdr->b_l1hdr.b_byteswap == DMU_BSWAP_NUMFUNCS) ?
+ 		    ZFS_HOST_BYTEORDER : !ZFS_HOST_BYTEORDER;
+@@ -6639,6 +6654,7 @@ arc_write(zio_t *pio, spa_t *spa, uint64_t txg,
+ 	} else if (ARC_BUF_COMPRESSED(buf)) {
+ 		ASSERT3U(HDR_GET_LSIZE(hdr), !=, arc_buf_size(buf));
+ 		localprop.zp_compress = HDR_GET_COMPRESS(hdr);
++		localprop.zp_complevel = hdr->b_complevel;
+ 		zio_flags |= ZIO_FLAG_RAW_COMPRESS;
+ 	}
+ 	callback = kmem_zalloc(sizeof (arc_write_callback_t), KM_SLEEP);
+@@ -7757,7 +7773,7 @@ l2arc_untransform(zio_t *zio, l2arc_read_callback_t *cb)
+ 
+ 		ret = zio_decompress_data(HDR_GET_COMPRESS(hdr),
+ 		    hdr->b_l1hdr.b_pabd, tmp, HDR_GET_PSIZE(hdr),
+-		    HDR_GET_LSIZE(hdr));
++		    HDR_GET_LSIZE(hdr), &hdr->b_complevel);
+ 		if (ret != 0) {
+ 			abd_return_buf_copy(cabd, tmp, arc_hdr_size(hdr));
+ 			arc_free_data_abd(hdr, cabd, arc_hdr_size(hdr), hdr);
+@@ -7856,6 +7872,7 @@ l2arc_read_done(zio_t *zio)
+ 	    (HDR_HAS_RABD(hdr) && zio->io_abd == hdr->b_crypt_hdr.b_rabd));
+ 	zio->io_bp_copy = cb->l2rcb_bp;	/* XXX fix in L2ARC 2.0	*/
+ 	zio->io_bp = &zio->io_bp_copy;	/* XXX fix in L2ARC 2.0	*/
++	zio->io_prop.zp_complevel = hdr->b_complevel;
+ 
+ 	valid_cksum = arc_cksum_is_equal(hdr, zio);
+ 
+@@ -8128,7 +8145,19 @@ l2arc_apply_transforms(spa_t *spa, arc_buf_hdr_t *hdr, uint64_t asize,
+ 		cabd = abd_alloc_for_io(asize, ismd);
+ 		tmp = abd_borrow_buf(cabd, asize);
+ 
+-		psize = zio_compress_data(compress, to_write, tmp, size);
++		psize = zio_compress_data(compress, to_write, tmp, size,
++		    hdr->b_complevel);
++
++		if (psize >= size) {
++			HDR_SET_COMPRESS(hdr, ZIO_COMPRESS_OFF);
++			to_write = abd_alloc_for_io(asize, ismd);
++			abd_copy(to_write, hdr->b_l1hdr.b_pabd, size);
++			if (size != asize)
++				abd_zero_off(to_write, size, asize - size);
++			if (cabd != NULL)
++				abd_free(cabd);
++			goto out;
++		}
+ 		ASSERT3U(psize, <=, HDR_GET_PSIZE(hdr));
+ 		if (psize < asize)
+ 			bzero((char *)tmp + psize, asize - psize);
+diff --git a/module/zfs/blkptr.c b/module/zfs/blkptr.c
+index ee24b1c31..7e8e3a702 100644
+--- a/module/zfs/blkptr.c
++++ b/module/zfs/blkptr.c
+@@ -142,7 +142,7 @@ decode_embedded_bp(const blkptr_t *bp, void *buf, int buflen)
+ 		uint8_t dstbuf[BPE_PAYLOAD_SIZE];
+ 		decode_embedded_bp_compressed(bp, dstbuf);
+ 		VERIFY0(zio_decompress_data_buf(BP_GET_COMPRESS(bp),
+-		    dstbuf, buf, psize, buflen));
++		    dstbuf, buf, psize, buflen, NULL));
+ 	} else {
+ 		ASSERT3U(lsize, ==, psize);
+ 		decode_embedded_bp_compressed(bp, buf);
+diff --git a/module/zfs/dbuf.c b/module/zfs/dbuf.c
+index d460f9922..210f96840 100644
+--- a/module/zfs/dbuf.c
++++ b/module/zfs/dbuf.c
+@@ -18,12 +18,16 @@
+  *
+  * CDDL HEADER END
+  */
++
+ /*
+  * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+- * Copyright 2011 Nexenta Systems, Inc.  All rights reserved.
+- * Copyright (c) 2012, 2019 by Delphix. All rights reserved.
+- * Copyright (c) 2013 by Saso Kiselkov. All rights reserved.
+- * Copyright (c) 2014 Spectra Logic Corporation, All rights reserved.
++ * Copyright (c) 2011, Nexenta Systems Inc. All rights reserved.
++ * Copyright (c) 2012, 2019, Delphix. All rights reserved.
++ * Copyright (c) 2013, Saso Kiselkov. All rights reserved.
++ * Copyright (c) 2014, Spectra Logic Corporation. All rights reserved.
++ * Copyright (c) 2019, Klara Inc. All rights reserved.
++ * Copyright (c) 2019, Allan Jude. All rights reserved.
++ * Use is subject to license terms.
+  */
+ 
+ #include <sys/zfs_context.h>
+@@ -1502,6 +1506,7 @@ dbuf_fix_old_data(dmu_buf_impl_t *db, uint64_t txg)
+ 		spa_t *spa = db->db_objset->os_spa;
+ 		enum zio_compress compress_type =
+ 		    arc_get_compression(db->db_buf);
++		uint8_t complevel = arc_get_complevel(db->db_buf);
+ 
+ 		if (arc_is_encrypted(db->db_buf)) {
+ 			boolean_t byteorder;
+@@ -1514,11 +1519,12 @@ dbuf_fix_old_data(dmu_buf_impl_t *db, uint64_t txg)
+ 			dr->dt.dl.dr_data = arc_alloc_raw_buf(spa, db,
+ 			    dmu_objset_id(dn->dn_objset), byteorder, salt, iv,
+ 			    mac, dn->dn_type, size, arc_buf_lsize(db->db_buf),
+-			    compress_type);
++			    compress_type, complevel);
+ 		} else if (compress_type != ZIO_COMPRESS_OFF) {
+ 			ASSERT3U(type, ==, ARC_BUFC_DATA);
+ 			dr->dt.dl.dr_data = arc_alloc_compressed_buf(spa, db,
+-			    size, arc_buf_lsize(db->db_buf), compress_type);
++			    size, arc_buf_lsize(db->db_buf), compress_type,
++			    complevel);
+ 		} else {
+ 			dr->dt.dl.dr_data = arc_alloc_buf(spa, db, type, size);
+ 		}
+@@ -3219,6 +3225,7 @@ dbuf_hold_copy(dnode_t *dn, dmu_buf_impl_t *db)
+ 	dbuf_dirty_record_t *dr = db->db_data_pending;
+ 	arc_buf_t *data = dr->dt.dl.dr_data;
+ 	enum zio_compress compress_type = arc_get_compression(data);
++	uint8_t complevel = arc_get_complevel(data);
+ 
+ 	if (arc_is_encrypted(data)) {
+ 		boolean_t byteorder;
+@@ -3230,11 +3237,11 @@ dbuf_hold_copy(dnode_t *dn, dmu_buf_impl_t *db)
+ 		dbuf_set_data(db, arc_alloc_raw_buf(dn->dn_objset->os_spa, db,
+ 		    dmu_objset_id(dn->dn_objset), byteorder, salt, iv, mac,
+ 		    dn->dn_type, arc_buf_size(data), arc_buf_lsize(data),
+-		    compress_type));
++		    compress_type, complevel));
+ 	} else if (compress_type != ZIO_COMPRESS_OFF) {
+ 		dbuf_set_data(db, arc_alloc_compressed_buf(
+ 		    dn->dn_objset->os_spa, db, arc_buf_size(data),
+-		    arc_buf_lsize(data), compress_type));
++		    arc_buf_lsize(data), compress_type, complevel));
+ 	} else {
+ 		dbuf_set_data(db, arc_alloc_buf(dn->dn_objset->os_spa, db,
+ 		    DBUF_GET_BUFC_TYPE(db), db->db.db_size));
+@@ -4039,6 +4046,7 @@ dbuf_sync_leaf(dbuf_dirty_record_t *dr, dmu_tx_t *tx)
+ 		int lsize = arc_buf_lsize(*datap);
+ 		arc_buf_contents_t type = DBUF_GET_BUFC_TYPE(db);
+ 		enum zio_compress compress_type = arc_get_compression(*datap);
++		uint8_t complevel = arc_get_complevel(*datap);
+ 
+ 		if (arc_is_encrypted(*datap)) {
+ 			boolean_t byteorder;
+@@ -4049,11 +4057,12 @@ dbuf_sync_leaf(dbuf_dirty_record_t *dr, dmu_tx_t *tx)
+ 			arc_get_raw_params(*datap, &byteorder, salt, iv, mac);
+ 			*datap = arc_alloc_raw_buf(os->os_spa, db,
+ 			    dmu_objset_id(os), byteorder, salt, iv, mac,
+-			    dn->dn_type, psize, lsize, compress_type);
++			    dn->dn_type, psize, lsize, compress_type,
++			    complevel);
+ 		} else if (compress_type != ZIO_COMPRESS_OFF) {
+ 			ASSERT3U(type, ==, ARC_BUFC_DATA);
+ 			*datap = arc_alloc_compressed_buf(os->os_spa, db,
+-			    psize, lsize, compress_type);
++			    psize, lsize, compress_type, complevel);
+ 		} else {
+ 			*datap = arc_alloc_buf(os->os_spa, db, type, psize);
+ 		}
+diff --git a/module/zfs/dmu.c b/module/zfs/dmu.c
+index b7fe0f5c0..4708d425e 100644
+--- a/module/zfs/dmu.c
++++ b/module/zfs/dmu.c
+@@ -18,14 +18,18 @@
+  *
+  * CDDL HEADER END
+  */
++
+ /*
+  * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+- * Copyright (c) 2011, 2018 by Delphix. All rights reserved.
+- * Copyright (c) 2013 by Saso Kiselkov. All rights reserved.
++ * Copyright (c) 2011, 2018, Delphix. All rights reserved.
++ * Copyright (c) 2013, Saso Kiselkov. All rights reserved.
+  * Copyright (c) 2013, Joyent, Inc. All rights reserved.
+  * Copyright (c) 2016, Nexenta Systems, Inc. All rights reserved.
+- * Copyright (c) 2015 by Chunwei Chen. All rights reserved.
+- * Copyright (c) 2019 Datto Inc.
++ * Copyright (c) 2015, Chunwei Chen. All rights reserved.
++ * Copyright (c) 2019, Datto Inc. All rights reserved.
++ * Copyright (c) 2019, Klara Inc. All rights reserved.
++ * Copyright (c) 2019, Allan Jude. All rights reserved.
++ * Use is subject to license terms.
+  */
+ 
+ #include <sys/dmu.h>
+@@ -1584,7 +1588,8 @@ dmu_copy_from_buf(objset_t *os, uint64_t object, uint64_t offset,
+ 		abuf = arc_loan_raw_buf(os->os_spa, dmu_objset_id(os),
+ 		    byteorder, salt, iv, mac, type,
+ 		    datalen, arc_buf_lsize(srcdb->db_buf),
+-		    arc_get_compression(srcdb->db_buf));
++		    arc_get_compression(srcdb->db_buf),
++		    arc_get_complevel(srcdb->db_buf));
+ 	} else {
+ 		/* we won't get a compressed db back from dmu_buf_hold() */
+ 		ASSERT3U(arc_get_compression(srcdb->db_buf),
+@@ -2111,6 +2116,7 @@ dmu_write_policy(objset_t *os, dnode_t *dn, int level, int wp, zio_prop_t *zp)
+ 	    (wp & WP_SPILL));
+ 	enum zio_checksum checksum = os->os_checksum;
+ 	enum zio_compress compress = os->os_compress;
++	uint8_t complevel = os->os_complevel;
+ 	enum zio_checksum dedup_checksum = os->os_dedup_checksum;
+ 	boolean_t dedup = B_FALSE;
+ 	boolean_t nopwrite = B_FALSE;
+@@ -2225,6 +2231,7 @@ dmu_write_policy(objset_t *os, dnode_t *dn, int level, int wp, zio_prop_t *zp)
+ 	}
+ 
+ 	zp->zp_compress = compress;
++	zp->zp_complevel = complevel;
+ 	zp->zp_checksum = checksum;
+ 	zp->zp_type = (wp & WP_SPILL) ? dn->dn_bonustype : type;
+ 	zp->zp_level = level;
+@@ -2241,6 +2248,7 @@ dmu_write_policy(objset_t *os, dnode_t *dn, int level, int wp, zio_prop_t *zp)
+ 	    os->os_zpl_special_smallblock : 0;
+ 
+ 	ASSERT3U(zp->zp_compress, !=, ZIO_COMPRESS_INHERIT);
++	ASSERT3U(zp->zp_complevel, !=, ZIO_COMPLEVEL_INHERIT);
+ }
+ 
+ /*
+diff --git a/module/zfs/dmu_objset.c b/module/zfs/dmu_objset.c
+index 2a9464e2a..1984cfe42 100644
+--- a/module/zfs/dmu_objset.c
++++ b/module/zfs/dmu_objset.c
+@@ -21,19 +21,21 @@
+ 
+ /*
+  * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+- * Copyright (c) 2012, 2018 by Delphix. All rights reserved.
+- * Copyright (c) 2013 by Saso Kiselkov. All rights reserved.
+- * Copyright (c) 2013, Joyent, Inc. All rights reserved.
+- * Copyright (c) 2014 Spectra Logic Corporation, All rights reserved.
+- * Copyright (c) 2015, STRATO AG, Inc. All rights reserved.
+- * Copyright (c) 2016 Actifio, Inc. All rights reserved.
+- * Copyright 2017 Nexenta Systems, Inc.
+- * Copyright (c) 2017 Open-E, Inc. All Rights Reserved.
++ * Copyright (c) 2010, Robert Milkowski. All rights reserved.
++ * Copyright (c) 2012, 2018, Delphix. All rights reserved.
++ * Copyright (c) 2013, Saso Kiselkov. All rights reserved.
++ * Copyright (c) 2013, Joyent Inc. All rights reserved.
++ * Copyright (c) 2014, Spectra Logic Corporation. All rights reserved.
++ * Copyright (c) 2015, STRATO AG. All rights reserved.
++ * Copyright (c) 2016, Actifio Inc. All rights reserved.
++ * Copyright (c) 2017, Nexenta Systems Inc. All Rights Reserved.
++ * Copyright (c) 2017, Open-E Inc. All Rights Reserved.
+  * Copyright (c) 2018, loli10K <ezomori.nozomu@gmail.com>. All rights reserved.
++ * Copyright (c) 2019, Klara Inc. All rights reserved.
++ * Copyright (c) 2019, Allan Jude. All rights reserved.
++ * Use is subject to license terms.
+  */
+ 
+-/* Portions Copyright 2010 Robert Milkowski */
+-
+ #include <sys/zfeature.h>
+ #include <sys/cred.h>
+ #include <sys/zfs_context.h>
+@@ -193,8 +195,17 @@ compression_changed_cb(void *arg, uint64_t newval)
+ 	 */
+ 	ASSERT(newval != ZIO_COMPRESS_INHERIT);
+ 
+-	os->os_compress = zio_compress_select(os->os_spa, newval,
+-	    ZIO_COMPRESS_ON);
++	os->os_compress = zio_compress_select(os->os_spa,
++	    newval & SPA_COMPRESSMASK, ZIO_COMPRESS_ON);
++}
++
++static void
++compress_level_changed_cb(void *arg, uint64_t newval)
++{
++	objset_t *os = arg;
++
++	os->os_complevel = zio_complevel_select(os->os_spa, os->os_compress,
++	    newval, ZIO_COMPLEVEL_DEFAULT);
+ }
+ 
+ static void
+@@ -536,6 +547,11 @@ dmu_objset_open_impl(spa_t *spa, dsl_dataset_t *ds, blkptr_t *bp,
+ 				    zfs_prop_to_name(ZFS_PROP_COMPRESSION),
+ 				    compression_changed_cb, os);
+ 			}
++			if (err == 0) {
++				err = dsl_prop_register(ds,
++				    zfs_prop_to_name(ZFS_PROP_COMPRESS_LEVEL),
++				    compress_level_changed_cb, os);
++			}
+ 			if (err == 0) {
+ 				err = dsl_prop_register(ds,
+ 				    zfs_prop_to_name(ZFS_PROP_COPIES),
+@@ -590,6 +606,7 @@ dmu_objset_open_impl(spa_t *spa, dsl_dataset_t *ds, blkptr_t *bp,
+ 		/* It's the meta-objset. */
+ 		os->os_checksum = ZIO_CHECKSUM_FLETCHER_4;
+ 		os->os_compress = ZIO_COMPRESS_ON;
++		os->os_complevel = ZIO_COMPLEVEL_DEFAULT;
+ 		os->os_encrypted = B_FALSE;
+ 		os->os_copies = spa_max_replication(spa);
+ 		os->os_dedup_checksum = ZIO_CHECKSUM_OFF;
 diff --git a/module/zfs/dmu_recv.c b/module/zfs/dmu_recv.c
-index dde3213e1b6..0130e420237 100644
+index 46a42197b..6ebfde141 100644
 --- a/module/zfs/dmu_recv.c
 +++ b/module/zfs/dmu_recv.c
-@@ -591,6 +591,13 @@ dmu_recv_begin_check(void *arg, dmu_tx_t *tx)
+@@ -18,13 +18,17 @@
+  *
+  * CDDL HEADER END
+  */
++
+ /*
+  * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+- * Copyright 2011 Nexenta Systems, Inc. All rights reserved.
+- * Copyright (c) 2011, 2018 by Delphix. All rights reserved.
+- * Copyright (c) 2014, Joyent, Inc. All rights reserved.
+- * Copyright 2014 HybridCluster. All rights reserved.
+- * Copyright (c) 2018, loli10K <ezomori.nozomu@gmail.com>. All rights reserved.
++ * Copyright (c) 2011, Nexenta Systems Inc. All rights reserved.
++ * Copyright (c) 2011, 2018 Delphix. All rights reserved.
++ * Copyright (c) 2014, Joyent Inc. All rights reserved.
++ * Copyright (c) 2014, HybridCluster. All rights reserved.
++ * Copyright (c) 2018, loli10K. All rights reserved.
++ * Copyright (c) 2019, Klara Inc. All rights reserved.
++ * Copyright (c) 2019, Allan Jude. All rights reserved.
++ * Use is subject to license terms.
+  */
+ 
+ #include <sys/dmu.h>
+@@ -591,6 +595,13 @@ dmu_recv_begin_check(void *arg, dmu_tx_t *tx)
  		dsflags |= DS_HOLD_FLAG_DECRYPT;
  	}
  
@@ -29920,11 +30033,63 @@ index dde3213e1b6..0130e420237 100644
  	error = dsl_dataset_hold_flags(dp, tofs, dsflags, FTAG, &ds);
  	if (error == 0) {
  		/* target fs already exists; recv into temp clone */
+@@ -2259,7 +2270,7 @@ receive_read_record(dmu_recv_cookie_t *drc)
+ 			    drrw->drr_object, byteorder, drrw->drr_salt,
+ 			    drrw->drr_iv, drrw->drr_mac, drrw->drr_type,
+ 			    drrw->drr_compressed_size, drrw->drr_logical_size,
+-			    drrw->drr_compressiontype);
++			    drrw->drr_compressiontype, 0);
+ 		} else if (DRR_WRITE_COMPRESSED(drrw)) {
+ 			ASSERT3U(drrw->drr_compressed_size, >, 0);
+ 			ASSERT3U(drrw->drr_logical_size, >=,
+@@ -2268,7 +2279,7 @@ receive_read_record(dmu_recv_cookie_t *drc)
+ 			abuf = arc_loan_compressed_buf(
+ 			    dmu_objset_spa(drc->drc_os),
+ 			    drrw->drr_compressed_size, drrw->drr_logical_size,
+-			    drrw->drr_compressiontype);
++			    drrw->drr_compressiontype, 0);
+ 		} else {
+ 			abuf = arc_loan_buf(dmu_objset_spa(drc->drc_os),
+ 			    is_meta, drrw->drr_logical_size);
+@@ -2343,7 +2354,7 @@ receive_read_record(dmu_recv_cookie_t *drc)
+ 			    drrs->drr_object, byteorder, drrs->drr_salt,
+ 			    drrs->drr_iv, drrs->drr_mac, drrs->drr_type,
+ 			    drrs->drr_compressed_size, drrs->drr_length,
+-			    drrs->drr_compressiontype);
++			    drrs->drr_compressiontype, 0);
+ 		} else {
+ 			abuf = arc_loan_buf(dmu_objset_spa(drc->drc_os),
+ 			    DMU_OT_IS_METADATA(drrs->drr_type),
 diff --git a/module/zfs/dmu_send.c b/module/zfs/dmu_send.c
-index b0a56650e57..ee37a5c8955 100644
+index 62de978d3..46c8aa81d 100644
 --- a/module/zfs/dmu_send.c
 +++ b/module/zfs/dmu_send.c
-@@ -1932,6 +1932,7 @@ setup_featureflags(struct dmu_send_params *dspp, objset_t *os,
+@@ -18,14 +18,18 @@
+  *
+  * CDDL HEADER END
+  */
++
+ /*
+  * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+- * Copyright 2011 Nexenta Systems, Inc. All rights reserved.
+- * Copyright (c) 2011, 2018 by Delphix. All rights reserved.
+- * Copyright (c) 2014, Joyent, Inc. All rights reserved.
+- * Copyright 2014 HybridCluster. All rights reserved.
+- * Copyright 2016 RackTop Systems.
+- * Copyright (c) 2016 Actifio, Inc. All rights reserved.
++ * Copyright (c) 2011, Nexenta Systems, Inc. All rights reserved.
++ * Copyright (c) 2011, 2018, Delphix. All rights reserved.
++ * Copyright (c) 2014, Joyent Inc. All rights reserved.
++ * Copyright (c) 2014, HybridCluster. All rights reserved.
++ * Copyright (c) 2016, RackTop Systems. All rights reserved.
++ * Copyright (c) 2016, Actifio Inc. All rights reserved.
++ * Copyright (c) 2019, Klara Inc. All rights reserved.
++ * Copyright (c) 2019, Allan Jude. All rights reserved.
++ * Use is subject to license terms.
+  */
+ 
+ #include <sys/dmu.h>
+@@ -1936,6 +1940,7 @@ setup_featureflags(struct dmu_send_params *dspp, objset_t *os,
  	/* raw send implies compressok */
  	if (dspp->compressok || dspp->rawok)
  		*featureflags |= DMU_BACKUP_FEATURE_COMPRESSED;
@@ -29932,7 +30097,7 @@ index b0a56650e57..ee37a5c8955 100644
  	if (dspp->rawok && os->os_encrypted)
  		*featureflags |= DMU_BACKUP_FEATURE_RAW;
  
-@@ -1942,6 +1943,13 @@ setup_featureflags(struct dmu_send_params *dspp, objset_t *os,
+@@ -1946,6 +1951,13 @@ setup_featureflags(struct dmu_send_params *dspp, objset_t *os,
  		*featureflags |= DMU_BACKUP_FEATURE_LZ4;
  	}
  
@@ -29947,10 +30112,34 @@ index b0a56650e57..ee37a5c8955 100644
  		*featureflags |= DMU_BACKUP_FEATURE_RESUMING;
  	}
 diff --git a/module/zfs/dsl_dataset.c b/module/zfs/dsl_dataset.c
-index ea2b60076dd..6a27666acf5 100644
+index ea2b60076..6f575cee4 100644
 --- a/module/zfs/dsl_dataset.c
 +++ b/module/zfs/dsl_dataset.c
-@@ -127,6 +127,7 @@ dsl_dataset_block_born(dsl_dataset_t *ds, const blkptr_t *bp, dmu_tx_t *tx)
+@@ -21,13 +21,16 @@
+ 
+ /*
+  * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+- * Copyright (c) 2011, 2018 by Delphix. All rights reserved.
+- * Copyright (c) 2014, Joyent, Inc. All rights reserved.
+- * Copyright (c) 2014 RackTop Systems.
+- * Copyright (c) 2014 Spectra Logic Corporation, All rights reserved.
+- * Copyright (c) 2016 Actifio, Inc. All rights reserved.
+- * Copyright 2016, OmniTI Computer Consulting, Inc. All rights reserved.
+- * Copyright 2017 Nexenta Systems, Inc.
++ * Copyright (c) 2011, 2018, Delphix. All rights reserved.
++ * Copyright (c) 2014, Joyent Inc. All rights reserved.
++ * Copyright (c) 2014, RackTop Systems. All rights reserved.
++ * Copyright (c) 2014, Spectra Logic Corporation. All rights reserved.
++ * Copyright (c) 2016, Actifio Inc. All rights reserved.
++ * Copyright (c) 2016, OmniTI Computer Consulting Inc. All rights reserved.
++ * Copyright (c) 2017, Nexenta Systems Inc. All rights reserved.
++ * Copyright (c) 2019, Klara Inc. All rights reserved.
++ * Copyright (c) 2019, Allan Jude. All rights reserved.
++ * Use is subject to license terms.
+  */
+ 
+ #include <sys/dmu_objset.h>
+@@ -127,6 +130,7 @@ dsl_dataset_block_born(dsl_dataset_t *ds, const blkptr_t *bp, dmu_tx_t *tx)
  	int compressed = BP_GET_PSIZE(bp);
  	int uncompressed = BP_GET_UCSIZE(bp);
  	int64_t delta;
@@ -29958,7 +30147,7 @@ index ea2b60076dd..6a27666acf5 100644
  
  	dprintf_bp(bp, "ds=%p", ds);
  
-@@ -156,7 +157,15 @@ dsl_dataset_block_born(dsl_dataset_t *ds, const blkptr_t *bp, dmu_tx_t *tx)
+@@ -156,7 +160,15 @@ dsl_dataset_block_born(dsl_dataset_t *ds, const blkptr_t *bp, dmu_tx_t *tx)
  		    (void *)B_TRUE;
  	}
  
@@ -29976,7 +30165,7 @@ index ea2b60076dd..6a27666acf5 100644
  		ASSERT3S(spa_feature_table[f].fi_type, ==,
  		    ZFEATURE_TYPE_BOOLEAN);
 diff --git a/module/zfs/spa_misc.c b/module/zfs/spa_misc.c
-index fe086d7b32c..ea8f3bc0fba 100644
+index fe086d7b3..ea8f3bc0f 100644
 --- a/module/zfs/spa_misc.c
 +++ b/module/zfs/spa_misc.c
 @@ -62,6 +62,7 @@
@@ -30008,35 +30197,135 @@ index fe086d7b32c..ea8f3bc0fba 100644
  
  /*
 diff --git a/module/zfs/zcp_get.c b/module/zfs/zcp_get.c
-index 504df0d4307..b6e80455344 100644
+index 44c4e82c2..9095d014f 100644
 --- a/module/zfs/zcp_get.c
 +++ b/module/zfs/zcp_get.c
-@@ -409,12 +409,18 @@ get_special_prop(lua_State *state, dsl_dataset_t *ds, const char *dsname,
+@@ -14,7 +14,10 @@
+  */
+ 
+ /*
+- * Copyright (c) 2016 by Delphix. All rights reserved.
++ * Copyright (c) 2016, Delphix. All rights reserved.
++ * Copyright (c) 2019, Klara Inc. All rights reserved.
++ * Copyright (c) 2019, Allan Jude. All rights reserved.
++ * Use is subject to license terms.
+  */
+ 
+ #include <sys/lua/lua.h>
+@@ -230,6 +233,7 @@ get_special_prop(lua_State *state, dsl_dataset_t *ds, const char *dsname,
+ 	char setpoint[ZFS_MAX_DATASET_NAME_LEN] =
+ 	    "Internal error - setpoint not determined";
+ 	zfs_type_t ds_type;
++	const char *prop_name = zfs_prop_to_name(zfs_prop);
+ 	zprop_type_t prop_type = zfs_prop_get_type(zfs_prop);
+ 	(void) get_objset_type(ds, &ds_type);
+ 
+@@ -407,7 +411,25 @@ get_special_prop(lua_State *state, dsl_dataset_t *ds, const char *dsname,
+ 		nvlist_free(nvl);
  		break;
  	}
- 	case ZFS_PROP_COMPRESSION:
++	case ZFS_PROP_COMPRESSION:
 +		error = dsl_prop_get_ds(ds, prop_name, sizeof (numval), 1,
 +		    &numval, setpoint);
 +		/* Special handling is only required for ZSTD */
 +		if (error || numval != ZIO_COMPRESS_ZSTD)
 +			break;
 +
- 		uint64_t levelval;
- 		const char *complevel_name =
- 		    zfs_prop_to_name(ZFS_PROP_COMPRESS_LEVEL);
++		uint64_t levelval;
++		const char *complevel_name =
++		    zfs_prop_to_name(ZFS_PROP_COMPRESS_LEVEL);
  
--		error = dsl_prop_get_ds(ds, complevel_name,
--		    sizeof (levelval), 1, &levelval, setpoint);
 +		error = dsl_prop_get_ds(ds, complevel_name, sizeof (levelval),
 +		    1, &levelval, setpoint);
- 		if (error == 0) {
- 			if (levelval == ZIO_COMPLEVEL_DEFAULT)
- 				break;
++		if (error == 0) {
++			if (levelval == ZIO_COMPLEVEL_DEFAULT)
++				break;
++			numval |= levelval << SPA_COMPRESSBITS;
++		}
++		break;
+ 	default:
+ 		/* Did not match these props, check in the dsl_dir */
+ 		error = get_dsl_dir_prop(ds, zfs_prop, &numval);
 diff --git a/module/zfs/zfs_ioctl.c b/module/zfs/zfs_ioctl.c
-index 395d5a9fc17..213c7e4042f 100644
+index fb8034f70..cd179283c 100644
 --- a/module/zfs/zfs_ioctl.c
 +++ b/module/zfs/zfs_ioctl.c
-@@ -2096,6 +2096,28 @@ zfs_ioc_objset_stats_impl(zfs_cmd_t *zc, objset_t *os)
+@@ -21,22 +21,24 @@
+ 
+ /*
+  * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+- * Portions Copyright 2011 Martin Matuska
+- * Copyright 2015, OmniTI Computer Consulting, Inc. All rights reserved.
+- * Portions Copyright 2012 Pawel Jakub Dawidek <pawel@dawidek.net>
+- * Copyright (c) 2014, 2016 Joyent, Inc. All rights reserved.
+- * Copyright 2016 Nexenta Systems, Inc.  All rights reserved.
+- * Copyright (c) 2014, Joyent, Inc. All rights reserved.
+- * Copyright (c) 2011, 2018 by Delphix. All rights reserved.
+- * Copyright (c) 2013 by Saso Kiselkov. All rights reserved.
+- * Copyright (c) 2013 Steven Hartland. All rights reserved.
+- * Copyright (c) 2014 Integros [integros.com]
+- * Copyright 2016 Toomas Soome <tsoome@me.com>
+- * Copyright (c) 2016 Actifio, Inc. All rights reserved.
++ * Copyright (c) 2011, Martin Matuska. All rights reserved.
++ * Copyright (c) 2015, OmniTI Computer Consulting Inc. All rights reserved.
++ * Copyright (c) 2012, Pawel Jakub Dawidek. All rights reserved.
++ * Copyright (c) 2014, 2016, Joyent Inc. All rights reserved.
++ * Copyright (c) 2016, Nexenta Systems Inc. All rights reserved.
++ * Copyright (c) 2011, 2018, Delphix. All rights reserved.
++ * Copyright (c) 2013, Saso Kiselkov. All rights reserved.
++ * Copyright (c) 2013, Steven Hartland. All rights reserved.
++ * Copyright (c) 2014, Integros. All rights reserved.
++ * Copyright (c) 2016, Toomas Soome. All rights reserved.
++ * Copyright (c) 2016, Actifio Inc. All rights reserved.
+  * Copyright (c) 2018, loli10K <ezomori.nozomu@gmail.com>. All rights reserved.
+- * Copyright 2017 RackTop Systems.
+- * Copyright (c) 2017 Open-E, Inc. All Rights Reserved.
+- * Copyright (c) 2019 Datto Inc.
++ * Copyright (c) 2017, RackTop Systems. All rights reserved.
++ * Copyright (c) 2017, Open-E Inc. All Rights Reserved.
++ * Copyright (c) 2019, Datto Inc. All rights reserved.
++ * Copyright (c) 2019, Klara Inc. All rights reserved.
++ * Copyright (c) 2019, Allan Jude. All rights reserved.
++ * Use is subject to license terms.
+  */
+ 
+ /*
+@@ -2041,6 +2043,34 @@ zfs_ioc_vdev_setfru(zfs_cmd_t *zc)
+ 	return (error);
+ }
+ 
++static int
++get_prop_uint64(nvlist_t *nv, const char *prop, nvlist_t **nvp,
++    uint64_t *val)
++{
++	int err = 0;
++	nvlist_t *subnv;
++	nvpair_t *pair;
++	nvpair_t *propval;
++
++	if (nvlist_lookup_nvpair(nv, prop, &pair) != 0)
++		return (EINVAL);
++
++	/* decode the property value */
++	propval = pair;
++	if (nvpair_type(pair) == DATA_TYPE_NVLIST) {
++		subnv = fnvpair_value_nvlist(pair);
++		if (nvp != NULL)
++			*nvp = subnv;
++		if (nvlist_lookup_nvpair(subnv, ZPROP_VALUE, &propval) != 0)
++			err = EINVAL;
++	}
++	if (nvpair_type(propval) == DATA_TYPE_UINT64) {
++		*val = fnvpair_value_uint64(propval);
++	}
++
++	return (err);
++}
++
+ static int
+ zfs_ioc_objset_stats_impl(zfs_cmd_t *zc, objset_t *os)
+ {
+@@ -2068,6 +2098,28 @@ zfs_ioc_objset_stats_impl(zfs_cmd_t *zc, objset_t *os)
  			}
  			VERIFY0(error);
  		}
@@ -30065,7 +30354,7 @@ index 395d5a9fc17..213c7e4042f 100644
  		if (error == 0)
  			error = put_nvlist(zc, nv);
  		nvlist_free(nv);
-@@ -2538,6 +2560,32 @@ zfs_prop_set_special(const char *dsname, zprop_source_t source,
+@@ -2510,6 +2562,32 @@ zfs_prop_set_special(const char *dsname, zprop_source_t source,
  		}
  		break;
  	}
@@ -30098,7 +30387,7 @@ index 395d5a9fc17..213c7e4042f 100644
  	default:
  		err = -1;
  	}
-@@ -4392,6 +4440,20 @@ zfs_check_settable(const char *dsname, nvpair_t *pair, cred_t *cr)
+@@ -4364,6 +4442,20 @@ zfs_check_settable(const char *dsname, nvpair_t *pair, cred_t *cr)
  				spa_close(spa, FTAG);
  			}
  
@@ -30119,11 +30408,106 @@ index 395d5a9fc17..213c7e4042f 100644
  			/*
  			 * If this is a bootable dataset then
  			 * verify that the compression algorithm
+diff --git a/module/zfs/zio.c b/module/zfs/zio.c
+index ebd7098d6..4cc9fe04c 100644
+--- a/module/zfs/zio.c
++++ b/module/zfs/zio.c
+@@ -18,11 +18,15 @@
+  *
+  * CDDL HEADER END
+  */
++
+ /*
+  * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+- * Copyright (c) 2011, 2019 by Delphix. All rights reserved.
+- * Copyright (c) 2011 Nexenta Systems, Inc. All rights reserved.
+- * Copyright (c) 2017, Intel Corporation.
++ * Copyright (c) 2011, 2019, Delphix. All rights reserved.
++ * Copyright (c) 2011, Nexenta Systems Inc. All rights reserved.
++ * Copyright (c) 2017, Intel Corporation. All rights reserved.
++ * Copyright (c) 2019, Klara Inc. All rights reserved.
++ * Copyright (c) 2019, Allan Jude. All rights reserved.
++ * Use is subject to license terms.
+  */
+ 
+ #include <sys/sysmacros.h>
+@@ -407,7 +411,8 @@ zio_decompress(zio_t *zio, abd_t *data, uint64_t size)
+ 	if (zio->io_error == 0) {
+ 		void *tmp = abd_borrow_buf(data, size);
+ 		int ret = zio_decompress_data(BP_GET_COMPRESS(zio->io_bp),
+-		    zio->io_abd, tmp, zio->io_size, size);
++		    zio->io_abd, tmp, zio->io_size, size,
++		    &zio->io_prop.zp_complevel);
+ 		abd_return_buf_copy(data, tmp, size);
+ 
+ 		if (zio_injection_enabled && ret == 0)
+@@ -457,7 +462,8 @@ zio_decrypt(zio_t *zio, abd_t *data, uint64_t size)
+ 			 */
+ 			tmp = zio_buf_alloc(lsize);
+ 			ret = zio_decompress_data(BP_GET_COMPRESS(bp),
+-			    zio->io_abd, tmp, zio->io_size, lsize);
++			    zio->io_abd, tmp, zio->io_size, lsize,
++			    &zio->io_prop.zp_complevel);
+ 			if (ret != 0) {
+ 				ret = SET_ERROR(EIO);
+ 				goto error;
+@@ -1616,8 +1622,9 @@ zio_write_compress(zio_t *zio)
+ 	if (compress != ZIO_COMPRESS_OFF &&
+ 	    !(zio->io_flags & ZIO_FLAG_RAW_COMPRESS)) {
+ 		void *cbuf = zio_buf_alloc(lsize);
+-		psize = zio_compress_data(compress, zio->io_abd, cbuf, lsize);
+-		if (psize == 0 || psize == lsize) {
++		psize = zio_compress_data(compress, zio->io_abd, cbuf, lsize,
++		    zp->zp_complevel);
++		if (psize == 0 || psize >= lsize) {
+ 			compress = ZIO_COMPRESS_OFF;
+ 			zio_buf_free(cbuf, lsize);
+ 		} else if (!zp->zp_dedup && !zp->zp_encrypt &&
+@@ -1679,8 +1686,8 @@ zio_write_compress(zio_t *zio)
+ 		 * to a hole.
+ 		 */
+ 		psize = zio_compress_data(ZIO_COMPRESS_EMPTY,
+-		    zio->io_abd, NULL, lsize);
+-		if (psize == 0)
++		    zio->io_abd, NULL, lsize, zp->zp_complevel);
++		if (psize == 0 || psize >= lsize)
+ 			compress = ZIO_COMPRESS_OFF;
+ 	} else {
+ 		ASSERT3U(psize, !=, 0);
+@@ -2766,6 +2773,7 @@ zio_write_gang_block(zio_t *pio)
+ 
+ 		zp.zp_checksum = gio->io_prop.zp_checksum;
+ 		zp.zp_compress = ZIO_COMPRESS_OFF;
++		zp.zp_complevel = gio->io_prop.zp_complevel;
+ 		zp.zp_type = DMU_OT_NONE;
+ 		zp.zp_level = 0;
+ 		zp.zp_copies = gio->io_prop.zp_copies;
 diff --git a/module/zfs/zio_compress.c b/module/zfs/zio_compress.c
-index 160dfbd3c76..27af166a20b 100644
+index 01c51347f..d2481f092 100644
 --- a/module/zfs/zio_compress.c
 +++ b/module/zfs/zio_compress.c
-@@ -36,6 +36,7 @@
+@@ -20,22 +20,20 @@
+  */
+ 
+ /*
+- * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
++ * Copyright (c) 2009, Sun Microsystems Inc. All rights reserved.
++ * Copyright (c) 2013, Saso Kiselkov. All rights reserved.
++ * Copyright (c) 2013, 2018, Delphix. All rights reserved.
++ * Copyright (c) 2019, Klara Inc. All rights reserved.
++ * Copyright (c) 2019, Allan Jude. All rights reserved.
+  * Use is subject to license terms.
+  */
+-/*
+- * Copyright (c) 2013 by Saso Kiselkov. All rights reserved.
+- */
+-
+-/*
+- * Copyright (c) 2013, 2018 by Delphix. All rights reserved.
+- */
+ 
+ #include <sys/zfs_context.h>
+ #include <sys/spa.h>
  #include <sys/zfeature.h>
  #include <sys/zio.h>
  #include <sys/zio_compress.h>
@@ -30131,10 +30515,81 @@ index 160dfbd3c76..27af166a20b 100644
  
  /*
   * If nonzero, every 1/X decompression attempts will fail, simulating
-@@ -142,6 +143,19 @@ zio_compress_data(enum zio_compress c, abd_t *src, void *dst, size_t s_len,
+@@ -47,24 +45,39 @@ unsigned long zio_decompress_fail_fraction = 0;
+  * Compression vectors.
+  */
+ zio_compress_info_t zio_compress_table[ZIO_COMPRESS_FUNCTIONS] = {
+-	{"inherit",		0,	NULL,		NULL},
+-	{"on",			0,	NULL,		NULL},
+-	{"uncompressed",	0,	NULL,		NULL},
+-	{"lzjb",		0,	lzjb_compress,	lzjb_decompress},
+-	{"empty",		0,	NULL,		NULL},
+-	{"gzip-1",		1,	gzip_compress,	gzip_decompress},
+-	{"gzip-2",		2,	gzip_compress,	gzip_decompress},
+-	{"gzip-3",		3,	gzip_compress,	gzip_decompress},
+-	{"gzip-4",		4,	gzip_compress,	gzip_decompress},
+-	{"gzip-5",		5,	gzip_compress,	gzip_decompress},
+-	{"gzip-6",		6,	gzip_compress,	gzip_decompress},
+-	{"gzip-7",		7,	gzip_compress,	gzip_decompress},
+-	{"gzip-8",		8,	gzip_compress,	gzip_decompress},
+-	{"gzip-9",		9,	gzip_compress,	gzip_decompress},
+-	{"zle",			64,	zle_compress,	zle_decompress},
+-	{"lz4",			0,	lz4_compress_zfs, lz4_decompress_zfs}
++	{"inherit",	0,	NULL,		NULL, NULL},
++	{"on",		0,	NULL,		NULL, NULL},
++	{"uncompressed", 0,	NULL,		NULL, NULL},
++	{"lzjb",	0,	lzjb_compress,	lzjb_decompress, NULL},
++	{"empty",	0,	NULL,		NULL, NULL},
++	{"gzip-1",	1,	gzip_compress,	gzip_decompress, NULL},
++	{"gzip-2",	2,	gzip_compress,	gzip_decompress, NULL},
++	{"gzip-3",	3,	gzip_compress,	gzip_decompress, NULL},
++	{"gzip-4",	4,	gzip_compress,	gzip_decompress, NULL},
++	{"gzip-5",	5,	gzip_compress,	gzip_decompress, NULL},
++	{"gzip-6",	6,	gzip_compress,	gzip_decompress, NULL},
++	{"gzip-7",	7,	gzip_compress,	gzip_decompress, NULL},
++	{"gzip-8",	8,	gzip_compress,	gzip_decompress, NULL},
++	{"gzip-9",	9,	gzip_compress,	gzip_decompress, NULL},
++	{"zle",		64,	zle_compress,	zle_decompress, NULL},
++	{"lz4",		0,	lz4_compress_zfs, lz4_decompress_zfs, NULL},
++	{"zstd",	ZIO_ZSTD_LEVEL_DEFAULT,	zstd_compress, zstd_decompress,
++	    zstd_decompress_level},
+ };
  
- 	complevel = ci->ci_level;
++uint8_t
++zio_complevel_select(spa_t *spa, enum zio_compress compress, uint8_t child,
++    uint8_t parent)
++{
++	uint8_t result;
++
++	result = child;
++	if (result == ZIO_ZSTDLVL_INHERIT)
++		result = parent;
++
++	return (result);
++}
++
+ enum zio_compress
+ zio_compress_select(spa_t *spa, enum zio_compress child,
+     enum zio_compress parent)
+@@ -102,9 +115,11 @@ zio_compress_zeroed_cb(void *data, size_t len, void *private)
+ }
  
+ size_t
+-zio_compress_data(enum zio_compress c, abd_t *src, void *dst, size_t s_len)
++zio_compress_data(enum zio_compress c, abd_t *src, void *dst, size_t s_len,
++    uint8_t level)
+ {
+ 	size_t c_len, d_len;
++	uint8_t complevel;
+ 	zio_compress_info_t *ci = &zio_compress_table[c];
+ 
+ 	ASSERT((uint_t)c < ZIO_COMPRESS_FUNCTIONS);
+@@ -123,9 +138,24 @@ zio_compress_data(enum zio_compress c, abd_t *src, void *dst, size_t s_len)
+ 	/* Compress at least 12.5% */
+ 	d_len = s_len - (s_len >> 3);
+ 
++	complevel = ci->ci_level;
++
 +	if (c == ZIO_COMPRESS_ZSTD) {
 +		/* If we don't know the level, we can't compress it */
 +		if (level == ZIO_ZSTDLVL_INHERIT)
@@ -30150,10 +30605,58 @@ index 160dfbd3c76..27af166a20b 100644
 +
  	/* No compression algorithms can read from ABDs directly */
  	void *tmp = abd_borrow_buf_copy(src, s_len);
- 	c_len = ci->ci_compress(tmp, dst, s_len, d_len, complevel);
+-	c_len = ci->ci_compress(tmp, dst, s_len, d_len, ci->ci_level);
++	c_len = ci->ci_compress(tmp, dst, s_len, d_len, complevel);
+ 	abd_return_buf(src, tmp, s_len);
+ 
+ 	if (c_len > d_len)
+@@ -137,21 +167,24 @@ zio_compress_data(enum zio_compress c, abd_t *src, void *dst, size_t s_len)
+ 
+ int
+ zio_decompress_data_buf(enum zio_compress c, void *src, void *dst,
+-    size_t s_len, size_t d_len)
++    size_t s_len, size_t d_len, uint8_t *level)
+ {
+ 	zio_compress_info_t *ci = &zio_compress_table[c];
+ 	if ((uint_t)c >= ZIO_COMPRESS_FUNCTIONS || ci->ci_decompress == NULL)
+ 		return (SET_ERROR(EINVAL));
+ 
++	if (ci->ci_decompress_level != NULL && level != NULL)
++		return (ci->ci_decompress_level(src, dst, s_len, d_len, level));
++
+ 	return (ci->ci_decompress(src, dst, s_len, d_len, ci->ci_level));
+ }
+ 
+ int
+ zio_decompress_data(enum zio_compress c, abd_t *src, void *dst,
+-    size_t s_len, size_t d_len)
++    size_t s_len, size_t d_len, uint8_t *level)
+ {
+ 	void *tmp = abd_borrow_buf_copy(src, s_len);
+-	int ret = zio_decompress_data_buf(c, tmp, dst, s_len, d_len);
++	int ret = zio_decompress_data_buf(c, tmp, dst, s_len, d_len, level);
+ 	abd_return_buf(src, tmp, s_len);
+ 
+ 	/*
+@@ -165,3 +198,15 @@ zio_decompress_data(enum zio_compress c, abd_t *src, void *dst,
+ 
+ 	return (ret);
+ }
++
++int
++zio_compress_to_feature(enum zio_compress comp)
++{
++	switch (comp) {
++	case ZIO_COMPRESS_ZSTD:
++		return (SPA_FEATURE_ZSTD_COMPRESS);
++	default:
++		/* fallthru */;
++	}
++	return (SPA_FEATURE_NONE);
++}
 diff --git a/module/zstd/Makefile.in b/module/zstd/Makefile.in
 new file mode 100644
-index 00000000000..afc2e7c75b5
+index 000000000..afc2e7c75
 --- /dev/null
 +++ b/module/zstd/Makefile.in
 @@ -0,0 +1,57 @@
@@ -30216,7 +30719,7 @@ index 00000000000..afc2e7c75b5
 +$(MODULE)-objs += $(ZSTD_PATH)/decompress/huf_decompress.o
 diff --git a/module/zstd/zstd.c b/module/zstd/zstd.c
 new file mode 100644
-index 00000000000..1a75dafdc53
+index 000000000..1a75dafdc
 --- /dev/null
 +++ b/module/zstd/zstd.c
 @@ -0,0 +1,609 @@
@@ -30830,7 +31333,7 @@ index 00000000000..1a75dafdc53
 +EXPORT_SYMBOL(zstd_decompress);
 +#endif
 diff --git a/scripts/Makefile.am b/scripts/Makefile.am
-index 1d43064927a..68340002f49 100644
+index 1605ab886..ac6e80839 100644
 --- a/scripts/Makefile.am
 +++ b/scripts/Makefile.am
 @@ -52,6 +52,7 @@ export KMOD_ZLUA=@abs_top_builddir@/module/lua/zlua.ko
@@ -30842,7 +31345,7 @@ index 1d43064927a..68340002f49 100644
  
  export EXTRA_ENVIRONMENT
 diff --git a/scripts/dkms.mkconf b/scripts/dkms.mkconf
-index e1a49dca14f..8c555597335 100755
+index e1a49dca1..8c5555973 100755
 --- a/scripts/dkms.mkconf
 +++ b/scripts/dkms.mkconf
 @@ -89,6 +89,7 @@ STRIP[4]="\${STRIP[0]}"
@@ -30862,7 +31365,7 @@ index e1a49dca14f..8c555597335 100755
 +DEST_MODULE_LOCATION[8]="/extra/zstd/zzstd"
  EOF
 diff --git a/scripts/zfs.sh b/scripts/zfs.sh
-index e1cfdc5e165..e676fc295fa 100755
+index e1cfdc5e1..e676fc295 100755
 --- a/scripts/zfs.sh
 +++ b/scripts/zfs.sh
 @@ -30,6 +30,7 @@ KMOD_ZLUA=${KMOD_ZLUA:-zlua}
@@ -30905,821 +31408,8 @@ index e1cfdc5e165..e676fc295fa 100755
  		NAME=$(basename "$KMOD" .ko)
  		USE_COUNT=$(lsmod | grep -E "^${NAME} " | awk '{print $3}')
  
-
-From 47fa4792de34c75d62d77d4d3651effde2af16e1 Mon Sep 17 00:00:00 2001
-From: =?UTF-8?q?Michael=20Niew=C3=B6hner?= <foss@mniewoehner.de>
-Date: Fri, 13 Dec 2019 13:22:30 +0100
-Subject: [PATCH 5/6] Add a build intermediary lib for zstd
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-
-This add a new build intermediary libzstd. This allows us to keep zstd
-cleanly separated from libzpool and to override the frame-size compiler
-option without for zstd only. (This is needed due to unused coude in
-the unmodified zstd source.)
-
-Signed-off-by: Michael Niewöhner <foss@mniewoehner.de>
----
- configure.ac             |  1 +
- lib/Makefile.am          |  3 +++
- lib/libzpool/Makefile.am |  3 ++-
- lib/libzstd/Makefile.am  | 45 ++++++++++++++++++++++++++++++++++++++++
- 4 files changed, 51 insertions(+), 1 deletion(-)
- create mode 100644 lib/libzstd/Makefile.am
-
-diff --git a/configure.ac b/configure.ac
-index 390d4060d13..a92cf3fd3e6 100644
---- a/configure.ac
-+++ b/configure.ac
-@@ -155,6 +155,7 @@ AC_CONFIG_FILES([
- 	lib/libzfs/libzfs_core.pc
- 	lib/libzfs_core/Makefile
- 	lib/libzpool/Makefile
-+	lib/libzstd/Makefile
- 	lib/libzutil/Makefile
- 	man/Makefile
- 	man/man1/Makefile
-diff --git a/lib/Makefile.am b/lib/Makefile.am
-index 8dff773df40..5ad690fae82 100644
---- a/lib/Makefile.am
-+++ b/lib/Makefile.am
-@@ -2,6 +2,9 @@
- # These six libraries are intermediary build components.
- SUBDIRS = libavl libefi libicp libshare libspl libtpool libzutil libunicode
- 
-+# zstd intermediary build component
-+SUBDIRS += libzstd
-+
- # These four libraries, which are installed as the final build product,
- # incorporate the six convenience libraries given above.
- SUBDIRS += libuutil libnvpair libzpool libzfs_core libzfs
-diff --git a/lib/libzpool/Makefile.am b/lib/libzpool/Makefile.am
-index 9c097ce79dd..eb0903a6dfb 100644
---- a/lib/libzpool/Makefile.am
-+++ b/lib/libzpool/Makefile.am
-@@ -196,7 +196,8 @@ libzpool_la_LIBADD = \
- 	$(top_builddir)/lib/libicp/libicp.la \
- 	$(top_builddir)/lib/libnvpair/libnvpair.la \
- 	$(top_builddir)/lib/libunicode/libunicode.la \
--	$(top_builddir)/lib/libzutil/libzutil.la
-+	$(top_builddir)/lib/libzutil/libzutil.la \
-+	$(top_builddir)/lib/libzstd/libzstd.la
- 
- libzpool_la_LIBADD += $(ZLIB) -ldl
- libzpool_la_LDFLAGS = -pthread -version-info 2:0:0
-diff --git a/lib/libzstd/Makefile.am b/lib/libzstd/Makefile.am
-new file mode 100644
-index 00000000000..02690113d44
---- /dev/null
-+++ b/lib/libzstd/Makefile.am
-@@ -0,0 +1,45 @@
-+include $(top_srcdir)/config/Rules.am
-+
-+VPATH = \
-+	$(top_srcdir)/contrib/zstd \
-+	$(top_srcdir)/contrib/zstd/common \
-+	$(top_srcdir)/contrib/zstd/compress \
-+	$(top_srcdir)/contrib/zstd/decompress \
-+	$(top_srcdir)/module/zstd
-+
-+DEFAULT_INCLUDES += \
-+	-I$(top_srcdir)/contrib/zstd \
-+	-I$(top_srcdir)/contrib/zstd/common \
-+	-I$(top_srcdir)/contrib/zstd/compress \
-+	-I$(top_srcdir)/contrib/zstd/decompress
-+
-+noinst_LTLIBRARIES = libzstd.la
-+
-+KERNEL_C = \
-+	zstd_common.c \
-+	fse_decompress.c \
-+	entropy_common.c \
-+	xxhash.c \
-+	hist.c \
-+	error_private.c \
-+	zstd_compress.c \
-+	zstd_compress_literals.c \
-+	zstd_compress_sequences.c \
-+	fse_compress.c \
-+	huf_compress.c \
-+	zstd_double_fast.c \
-+	zstd_fast.c \
-+	zstd_lazy.c \
-+	zstd_ldm.c \
-+	zstd_opt.c \
-+	zstd_ddict.c \
-+	zstd_decompress.c \
-+	zstd_decompress_block.c \
-+	huf_decompress.c \
-+	zstd.c
-+
-+nodist_libzstd_la_SOURCES = $(KERNEL_C)
-+
-+# -fno-tree-vectorize gets set for gcc in zstd/common/compiler.h
-+# Set it for other compilers, too.
-+CFLAGS_zstd_decompress_block.o := -fno-tree-vectorize
-
-From 2a5d4a496f39884893cb138d54f0f9c072f57cb4 Mon Sep 17 00:00:00 2001
-From: =?UTF-8?q?Michael=20Niew=C3=B6hner?= <foss@mniewoehner.de>
-Date: Sun, 1 Dec 2019 01:34:28 +0100
-Subject: [PATCH 6/6] Formal changes: tests, documentation, copyright
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-
-Add zstd to the test suite
-- add zstd to history_002_pos.ksh
-- add random levels of zstd to history_002_pos.ksh
-- add zstd-fast to history_002_pos.ksh
-- add random levels of zstd-fast to history_002_pos.ksh
-
-Add documentation
-- add man page content
-- add README for contrib/zstd
-
-Fixup copyright headers of touched and new files
-- Adds copyright headers for Allan Jude / Klara Inc.
-- Added Ornias1993 Copyright
-- Cleans copyright header formatting
-
-Co-authored-by: Allan Jude <allanjude@freebsd.org>
-Co-authored-by: Sebastian Gottschall <s.gottschall@dd-wrt.com>
-Co-authored-by: Kjeld Schouten-Lebbing <kjeld@schouten-lebbing.nl>
-Co-authored-by: Michael Niewöhner <foss@mniewoehner.de>
-Signed-off-by: Allan Jude <allanjude@freebsd.org>
-Signed-off-by: Sebastian Gottschall <s.gottschall@dd-wrt.com>
-Signed-off-by: Kjeld Schouten-Lebbing <kjeld@schouten-lebbing.nl>
-Signed-off-by: Michael Niewöhner <foss@mniewoehner.de>
----
- contrib/zstd/README.md                        | 24 +++++++
- include/sys/arc.h                             |  8 ++-
- include/sys/spa.h                             | 20 +++---
- include/sys/zio.h                             | 11 ++--
- include/sys/zio_compress.h                    |  6 +-
- man/man5/zpool-features.5                     | 44 ++++++++++++-
- man/man8/zfsprops.8                           | 65 ++++++++++++++-----
- module/zcommon/zfeature_common.c              | 13 ++--
- module/zcommon/zfs_prop.c                     | 13 ++--
- module/zfs/arc.c                              | 11 ++--
- module/zfs/dbuf.c                             | 12 ++--
- module/zfs/dmu.c                              | 12 ++--
- module/zfs/dmu_objset.c                       | 22 ++++---
- module/zfs/dmu_recv.c                         | 14 ++--
- module/zfs/dmu_send.c                         | 16 +++--
- module/zfs/dsl_dataset.c                      | 17 +++--
- module/zfs/zcp_get.c                          |  5 +-
- module/zfs/zfs_ioctl.c                        | 32 ++++-----
- module/zfs/zio.c                              | 10 ++-
- module/zfs/zio_compress.c                     | 13 ++--
- tests/zfs-tests/include/properties.shlib      |  2 +-
- .../cli_root/zpool_get/zpool_get.cfg          |  1 +
- .../functional/history/history_002_pos.ksh    |  4 +-
- 23 files changed, 257 insertions(+), 118 deletions(-)
- create mode 100644 contrib/zstd/README.md
-
-diff --git a/contrib/zstd/README.md b/contrib/zstd/README.md
-new file mode 100644
-index 00000000000..ef5f27c1041
---- /dev/null
-+++ b/contrib/zstd/README.md
-@@ -0,0 +1,24 @@
-+# ZSTD Contrib Library Manual
-+
-+## Introduction
-+
-+This `contrib` contains the ZSTD library used in ZFS. It is heavily cut-down by
-+dropping any unneeded files but otherwise is intentionally unmodified. Please do
-+not alter these files in any way, besides upgrading to a newer ZSTD release.
-+
-+## Updating ZSTD
-+
-+To update ZSTD the following steps need to be taken:
-+
-+1. Grab the latest release of [ZSTD](https://github.com/facebook/zstd/releases).
-+2. Replace (not merge) `common`, `compress`, `decompress` and `zstd.h` with the
-+   new versions from `lib/`.
-+3. Make sure any newly required files and/or folders are also included.
-+   1. Add an empty file `Makefile.am` inside any new folder.
-+   2. Add them to `AC_CONFIG_FILES` in `configure.ac` accordingly.
-+   3. Make sure new files/folders are listed in
-+      - `contrib/zstd/Makefile.am`
-+      - `lib/libzstd/Makefile.am`
-+      - `module/zstd/Makefile.in`
-+      - this README
-+4. Update the version `ZFS_MODULE_VERSION("x.y.z")` in `module/zstd/zstd.c`.
-diff --git a/include/sys/arc.h b/include/sys/arc.h
-index 79284167aba..522d6336bda 100644
---- a/include/sys/arc.h
-+++ b/include/sys/arc.h
-@@ -18,10 +18,14 @@
-  *
-  * CDDL HEADER END
-  */
-+
- /*
-  * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
-- * Copyright (c) 2012, 2016 by Delphix. All rights reserved.
-- * Copyright (c) 2013 by Saso Kiselkov. All rights reserved.
-+ * Copyright (c) 2012, 2016, Delphix. All rights reserved.
-+ * Copyright (c) 2013, Saso Kiselkov. All rights reserved.
-+ * Copyright (c) 2019, Allan Jude. All rights reserved.
-+ * Copyright (c) 2019, Klara Inc. All rights reserved.
-+ * Use is subject to license terms.
-  */
- 
- #ifndef	_SYS_ARC_H
-diff --git a/include/sys/spa.h b/include/sys/spa.h
-index 675290bff27..18ae9fb2841 100644
---- a/include/sys/spa.h
-+++ b/include/sys/spa.h
-@@ -18,16 +18,20 @@
-  *
-  * CDDL HEADER END
-  */
-+
- /*
-  * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
-- * Copyright (c) 2011, 2019 by Delphix. All rights reserved.
-- * Copyright 2011 Nexenta Systems, Inc.  All rights reserved.
-- * Copyright (c) 2014 Spectra Logic Corporation, All rights reserved.
-- * Copyright 2013 Saso Kiselkov. All rights reserved.
-- * Copyright (c) 2014 Integros [integros.com]
-- * Copyright 2017 Joyent, Inc.
-- * Copyright (c) 2017, 2019, Datto Inc. All rights reserved.
-- * Copyright (c) 2017, Intel Corporation.
-+ * Copyright (c) 2011, 2019, Delphix. All rights reserved.
-+ * Copyright (c) 2011, Nexenta Systems Inc. All rights reserved.
-+ * Copyright (c) 2014, Spectra Logic Corporation. All rights reserved.
-+ * Copyright (c) 2013, Saso Kiselkov. All rights reserved.
-+ * Copyright (c) 2014, Integros. All rights reserved.
-+ * Copyright (c) 2017, Joyent, Inc. All rights reserved.
-+ * Copyright (c) 2017, Datto Inc. All rights reserved.
-+ * Copyright (c) 2017, Intel Corporation. All rights reserved.
-+ * Copyright (c) 2019, Allan Jude. All rights reserved.
-+ * Copyright (c) 2019, Klara Inc. All rights reserved.
-+ * Use is subject to license terms.
-  */
- 
- #ifndef _SYS_SPA_H
-diff --git a/include/sys/zio.h b/include/sys/zio.h
-index 0e5b956450e..91775b6f5f8 100644
---- a/include/sys/zio.h
-+++ b/include/sys/zio.h
-@@ -21,11 +21,14 @@
- 
- /*
-  * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
-- * Copyright 2011 Nexenta Systems, Inc. All rights reserved.
-- * Copyright (c) 2012, 2018 by Delphix. All rights reserved.
-- * Copyright (c) 2013 by Saso Kiselkov. All rights reserved.
-+ * Copyright (c) 2011, Nexenta Systems, Inc. All rights reserved.
-+ * Copyright (c) 2012, 2018, Delphix. All rights reserved.
-+ * Copyright (c) 2013, Saso Kiselkov. All rights reserved.
-  * Copyright (c) 2013, Joyent, Inc. All rights reserved.
-- * Copyright 2016 Toomas Soome <tsoome@me.com>
-+ * Copyright (c) 2016, Toomas Soome. All rights reserved.
-+ * Copyright (c) 2019, Allan Jude. All rights reserved.
-+ * Copyright (c) 2019, Klara Inc. All rights reserved.
-+ * Use is subject to license terms.
-  */
- 
- #ifndef _ZIO_H
-diff --git a/include/sys/zio_compress.h b/include/sys/zio_compress.h
-index 3b4340f21ee..cfb20e2fbac 100644
---- a/include/sys/zio_compress.h
-+++ b/include/sys/zio_compress.h
-@@ -20,9 +20,11 @@
-  */
- 
- /*
-- * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
-+ * Copyright (c) 2009, Sun Microsystems Inc. All rights reserved.
-+ * Copyright (c) 2015, 2016, Delphix. All rights reserved.
-+ * Copyright (c) 2019, Allan Jude. All rights reserved.
-+ * Copyright (c) 2019, Klara Inc. All rights reserved.
-  * Use is subject to license terms.
-- * Copyright (c) 2015, 2016 by Delphix. All rights reserved.
-  */
- 
- #ifndef _SYS_ZIO_COMPRESS_H
-diff --git a/man/man5/zpool-features.5 b/man/man5/zpool-features.5
-index b9a739d5bb2..61a5e67fa6a 100644
---- a/man/man5/zpool-features.5
-+++ b/man/man5/zpool-features.5
-@@ -1,7 +1,4 @@
- '\" te
--.\" Copyright (c) 2012, 2018 by Delphix. All rights reserved.
--.\" Copyright (c) 2013 by Saso Kiselkov. All rights reserved.
--.\" Copyright (c) 2014, Joyent, Inc. All rights reserved.
- .\" The contents of this file are subject to the terms of the Common Development
- .\" and Distribution License (the "License").  You may not use this file except
- .\" in compliance with the License. You can obtain a copy of the license at
-@@ -14,6 +11,11 @@
- .\" CDDL HEADER, with the fields enclosed by brackets "[]" replaced with your
- .\" own identifying information:
- .\" Portions Copyright [yyyy] [name of copyright owner]
-+.\" Copyright (c) 2012, 2018, Delphix. All rights reserved.
-+.\" Copyright (c) 2013, Saso Kiselkov. All rights reserved.
-+.\" Copyright (c) 2014, Joyent Inc. All rights reserved.
-+.\" Copyright (c) 2019, Klara Inc. All rights reserved.
-+.\" Copyright (c) 2019, Allan Jude. All rights reserved.
- .TH ZPOOL-FEATURES 5 "Jun 8, 2018"
- .SH NAME
- zpool\-features \- ZFS pool feature descriptions
-@@ -926,6 +928,42 @@ This feature becomes \fBactive\fR when the \fBzpool checkpoint\fR subcommand
- is used to checkpoint the pool.
- The feature will only return back to being \fBenabled\fR when the pool
- is rewound or the checkpoint has been discarded.
-+.RE
-+
-+.sp
-+.ne 2
-+.na
-+\fBzstd_compress\fR
-+.ad
-+.RS 4n
-+.TS
-+l l .
-+GUID	org.freebsd:zstd_compress
-+READ\-ONLY COMPATIBLE	no
-+DEPENDENCIES	none
-+.TE
-+
-+\fBzstd\fR is a high-performance compression algorithm that features a
-+combination of high compression ratios and high speed. Compared to \fBgzip\fR,
-+\fBzstd\fR offers slighty better compression at much higher speeds. Compared
-+to \fBlz4\fR, \fBzstd\fR offers much better compression while being only
-+modestly slower. Typically, \fBzstd\fR compression speed ranges from 250 to 500
-+MB/s per thread and decompression speed is over 1 GB/s per thread.
-+
-+When the \fBzstd\fR feature is set to \fBenabled\fR, the administrator can turn
-+on \fBzstd\fR compression of any dataset by running
-+`zfs set compress=zstd <pool/fs>`.
-+
-+This feature becomes \fBactive\fR once a \fBcompress\fR property has been set to
-+\fBzstd\fR, and will return to being \fBenabled\fR once all filesystems that
-+have ever had their compress property set to \fBzstd\fR are destroyed.
-+
-+Booting off of \fBzstd\fR-compressed root pools is not yet supported.
-+
-+Sending a \fBzstd\fR dataset to a non-\fBzstd zpool\fR by \fBzfs send -e\fR is
-+not possible and will result in an error. Either drop the \fB-e\fR option or
-+enable \fBzstd\fR on the receiver \fBzpool\fR.
-+.RE
- 
- .SH "SEE ALSO"
- zpool(8)
-diff --git a/man/man8/zfsprops.8 b/man/man8/zfsprops.8
-index da3280a9f0d..890a802683e 100644
---- a/man/man8/zfsprops.8
-+++ b/man/man8/zfsprops.8
-@@ -19,23 +19,22 @@
- .\" CDDL HEADER END
- .\"
- .\"
--.\" Copyright (c) 2009 Sun Microsystems, Inc. All Rights Reserved.
--.\" Copyright 2011 Joshua M. Clulow <josh@sysmgr.org>
--.\" Copyright (c) 2011, 2019 by Delphix. All rights reserved.
--.\" Copyright (c) 2011, Pawel Jakub Dawidek <pjd@FreeBSD.org>
--.\" Copyright (c) 2012, Glen Barber <gjb@FreeBSD.org>
--.\" Copyright (c) 2012, Bryan Drewery <bdrewery@FreeBSD.org>
--.\" Copyright (c) 2013, Steven Hartland <smh@FreeBSD.org>
--.\" Copyright (c) 2013 by Saso Kiselkov. All rights reserved.
--.\" Copyright (c) 2014, Joyent, Inc. All rights reserved.
--.\" Copyright (c) 2014 by Adam Stevko. All rights reserved.
--.\" Copyright (c) 2014 Integros [integros.com]
--.\" Copyright (c) 2016 Nexenta Systems, Inc. All Rights Reserved.
--.\" Copyright (c) 2014, Xin LI <delphij@FreeBSD.org>
--.\" Copyright (c) 2014-2015, The FreeBSD Foundation, All Rights Reserved.
--.\" Copyright 2019 Richard Laager. All rights reserved.
--.\" Copyright 2018 Nexenta Systems, Inc.
--.\" Copyright 2019 Joyent, Inc.
-+.\" Copyright (c) 2009, Sun Microsystems, Inc. All Rights Reserved.
-+.\" Copyright (c) 2011, Joshua M. Clulow. All Rights Reserved.
-+.\" Copyright (c) 2011, 2019, Delphix. All rights reserved.
-+.\" Copyright (c) 2011, Pawel Jakub Dawidek. All rights reserved.
-+.\" Copyright (c) 2012, Glen Barber. All rights reserved.
-+.\" Copyright (c) 2012, Bryan Drewery. All rights reserved.
-+.\" Copyright (c) 2013, Steven Hartland. All rights reserved.
-+.\" Copyright (c) 2013, Saso Kiselkov. All rights reserved.
-+.\" Copyright (c) 2014, 2019, Joyent, Inc. All rights reserved.
-+.\" Copyright (c) 2014, Adam Stevko. All rights reserved.
-+.\" Copyright (c) 2014, Integros. All rights reserved.
-+.\" Copyright (c) 2014, Xin LI. All rights reserved.
-+.\" Copyright (c) 2014-2015, The FreeBSD Foundation. All Rights Reserved.
-+.\" Copyright (c) 2016, 2018, Nexenta Systems, Inc. All rights reserved.
-+.\" Copyright (c) 2019, Richard Laager. All rights reserved.
-+.\" Copyright (c) 2019, Kjeld Schouten-Lebbing. All rights reserved.
- .\"
- .Dd June 30, 2019
- .Dt ZFSPROPS 8
-@@ -723,7 +722,8 @@ for more information on these algorithms.
- Changing this property affects only newly-written data.
- .It Xo
- .Sy compression Ns = Ns Sy on Ns | Ns Sy off Ns | Ns Sy gzip Ns | Ns
--.Sy gzip- Ns Em N Ns | Ns Sy lz4 Ns | Ns Sy lzjb Ns | Ns Sy zle
-+.Sy gzip- Ns Em N Ns | Ns Sy lz4 Ns | Ns Sy lzjb Ns | Ns Sy zle Ns | Ns Sy zstd Ns | Ns
-+.Sy zstd- Ns Em N Ns | Ns Sy zstd-fast- Ns Em N
- .Xc
- Controls the compression algorithm used for this dataset.
- .Pp
-@@ -791,6 +791,35 @@ is equivalent to
- .Pc .
- .Pp
- The
-+.Sy zstd
-+compression using the zstd algorithm ,
-+You can specify the
-+.Sy zstd
-+level by using the value
-+.Sy zstd- Ns Em N ,
-+where
-+.Em N
-+is an integer from 1
-+.Pq fastest
-+to 19
-+.Pq best compression ratio .
-+.Sy zstd
-+You can also specify a negative
-+.Sy zstd
-+level by using the value
-+.Sy zstd- Ns Em N ,
-+where
-+.Em N
-+is an integer from 100
-+.Pq fastest
-+to 1
-+.Pq best compression ratio .
-+.Sy zstd
-+is equivalent to
-+.Sy zstd-3
-+.Pc .
-+.Pp
-+The
- .Sy zle
- compression algorithm compresses runs of zeros.
- .Pp
-diff --git a/module/zcommon/zfeature_common.c b/module/zcommon/zfeature_common.c
-index 02aaf8a0f76..1863b8e55d3 100644
---- a/module/zcommon/zfeature_common.c
-+++ b/module/zcommon/zfeature_common.c
-@@ -20,11 +20,14 @@
-  */
- 
- /*
-- * Copyright (c) 2011, 2018 by Delphix. All rights reserved.
-- * Copyright (c) 2013 by Saso Kiselkov. All rights reserved.
-- * Copyright (c) 2013, Joyent, Inc. All rights reserved.
-- * Copyright (c) 2014, Nexenta Systems, Inc. All rights reserved.
-- * Copyright (c) 2017, Intel Corporation.
-+ * Copyright (c) 2011, 2018, Delphix. All rights reserved.
-+ * Copyright (c) 2013, Saso Kiselkov. All rights reserved.
-+ * Copyright (c) 2013, Joyent Inc. All rights reserved.
-+ * Copyright (c) 2014, Nexenta Systems Inc. All rights reserved.
-+ * Copyright (c) 2017, Intel Corporation. All rights reserved.
-+ * Copyright (c) 2019, Klara Inc. All rights reserved.
-+ * Copyright (c) 2019, Allan Jude. All rights reserved.
-+ * Use is subject to license terms.
-  */
- 
- #ifndef _KERNEL
-diff --git a/module/zcommon/zfs_prop.c b/module/zcommon/zfs_prop.c
-index 94b2e884ee5..1d128ce19b4 100644
---- a/module/zcommon/zfs_prop.c
-+++ b/module/zcommon/zfs_prop.c
-@@ -18,16 +18,17 @@
-  *
-  * CDDL HEADER END
-  */
-+
- /*
-  * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
-- * Copyright (c) 2011, 2018 by Delphix. All rights reserved.
-- * Copyright (c) 2013 by Saso Kiselkov. All rights reserved.
-- * Copyright 2016, Joyent, Inc.
-- * Portions Copyright (c) 2019 by Klara Inc.
-+ * Copyright (c) 2010, Robert Milkowski. All rights reserved.
-+ * Copyright (c) 2011, 2018, Delphix. All rights reserved.
-+ * Copyright (c) 2013, Saso Kiselkov. All rights reserved.
-+ * Copyright (c) 2016, Joyent, Inc. All rights reserved.
-+ * Copyright (c) 2019, Klara Inc. All rights reserved.
-+ * Use is subject to license terms.
-  */
- 
--/* Portions Copyright 2010 Robert Milkowski */
--
- #include <sys/zio.h>
- #include <sys/spa.h>
- #include <sys/u8_textprep.h>
-diff --git a/module/zfs/arc.c b/module/zfs/arc.c
-index 97bd19d0512..9ab1b30b1fa 100644
---- a/module/zfs/arc.c
-+++ b/module/zfs/arc.c
-@@ -18,14 +18,15 @@
-  *
-  * CDDL HEADER END
-  */
-+
- /*
-  * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
-- * Copyright (c) 2018, Joyent, Inc.
-- * Copyright (c) 2011, 2019 by Delphix. All rights reserved.
-- * Copyright (c) 2014 by Saso Kiselkov. All rights reserved.
-- * Copyright 2017 Nexenta Systems, Inc.  All rights reserved.
-+ * Copyright (c) 2018, Joyent Inc. All rights reserved.
-+ * Copyright (c) 2011, 2019, Delphix. All rights reserved.
-+ * Copyright (c) 2014, Saso Kiselkov. All rights reserved.
-+ * Copyright (c) 2017, Nexenta Systems Inc. All rights reserved.
-  * Copyright (c) 2019, loli10K <ezomori.nozomu@gmail.com>. All rights reserved.
-- * Portions Copyright (c) 2019 by Klara Inc.
-+ * Copyright (c) 2019, Klara Inc. All rights reserved.
-  */
- 
- /*
-diff --git a/module/zfs/dbuf.c b/module/zfs/dbuf.c
-index b9f71141cdd..210f9684032 100644
---- a/module/zfs/dbuf.c
-+++ b/module/zfs/dbuf.c
-@@ -18,12 +18,16 @@
-  *
-  * CDDL HEADER END
-  */
-+
- /*
-  * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
-- * Copyright 2011 Nexenta Systems, Inc.  All rights reserved.
-- * Copyright (c) 2012, 2019 by Delphix. All rights reserved.
-- * Copyright (c) 2013 by Saso Kiselkov. All rights reserved.
-- * Copyright (c) 2014 Spectra Logic Corporation, All rights reserved.
-+ * Copyright (c) 2011, Nexenta Systems Inc. All rights reserved.
-+ * Copyright (c) 2012, 2019, Delphix. All rights reserved.
-+ * Copyright (c) 2013, Saso Kiselkov. All rights reserved.
-+ * Copyright (c) 2014, Spectra Logic Corporation. All rights reserved.
-+ * Copyright (c) 2019, Klara Inc. All rights reserved.
-+ * Copyright (c) 2019, Allan Jude. All rights reserved.
-+ * Use is subject to license terms.
-  */
- 
- #include <sys/zfs_context.h>
-diff --git a/module/zfs/dmu.c b/module/zfs/dmu.c
-index d99aed1991f..4708d425eff 100644
---- a/module/zfs/dmu.c
-+++ b/module/zfs/dmu.c
-@@ -18,14 +18,18 @@
-  *
-  * CDDL HEADER END
-  */
-+
- /*
-  * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
-- * Copyright (c) 2011, 2018 by Delphix. All rights reserved.
-- * Copyright (c) 2013 by Saso Kiselkov. All rights reserved.
-+ * Copyright (c) 2011, 2018, Delphix. All rights reserved.
-+ * Copyright (c) 2013, Saso Kiselkov. All rights reserved.
-  * Copyright (c) 2013, Joyent, Inc. All rights reserved.
-  * Copyright (c) 2016, Nexenta Systems, Inc. All rights reserved.
-- * Copyright (c) 2015 by Chunwei Chen. All rights reserved.
-- * Copyright (c) 2019 Datto Inc.
-+ * Copyright (c) 2015, Chunwei Chen. All rights reserved.
-+ * Copyright (c) 2019, Datto Inc. All rights reserved.
-+ * Copyright (c) 2019, Klara Inc. All rights reserved.
-+ * Copyright (c) 2019, Allan Jude. All rights reserved.
-+ * Use is subject to license terms.
-  */
- 
- #include <sys/dmu.h>
-diff --git a/module/zfs/dmu_objset.c b/module/zfs/dmu_objset.c
-index 4966f8da566..1984cfe42f5 100644
---- a/module/zfs/dmu_objset.c
-+++ b/module/zfs/dmu_objset.c
-@@ -21,19 +21,21 @@
- 
- /*
-  * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
-- * Copyright (c) 2012, 2018 by Delphix. All rights reserved.
-- * Copyright (c) 2013 by Saso Kiselkov. All rights reserved.
-- * Copyright (c) 2013, Joyent, Inc. All rights reserved.
-- * Copyright (c) 2014 Spectra Logic Corporation, All rights reserved.
-- * Copyright (c) 2015, STRATO AG, Inc. All rights reserved.
-- * Copyright (c) 2016 Actifio, Inc. All rights reserved.
-- * Copyright 2017 Nexenta Systems, Inc.
-- * Copyright (c) 2017 Open-E, Inc. All Rights Reserved.
-+ * Copyright (c) 2010, Robert Milkowski. All rights reserved.
-+ * Copyright (c) 2012, 2018, Delphix. All rights reserved.
-+ * Copyright (c) 2013, Saso Kiselkov. All rights reserved.
-+ * Copyright (c) 2013, Joyent Inc. All rights reserved.
-+ * Copyright (c) 2014, Spectra Logic Corporation. All rights reserved.
-+ * Copyright (c) 2015, STRATO AG. All rights reserved.
-+ * Copyright (c) 2016, Actifio Inc. All rights reserved.
-+ * Copyright (c) 2017, Nexenta Systems Inc. All Rights Reserved.
-+ * Copyright (c) 2017, Open-E Inc. All Rights Reserved.
-  * Copyright (c) 2018, loli10K <ezomori.nozomu@gmail.com>. All rights reserved.
-+ * Copyright (c) 2019, Klara Inc. All rights reserved.
-+ * Copyright (c) 2019, Allan Jude. All rights reserved.
-+ * Use is subject to license terms.
-  */
- 
--/* Portions Copyright 2010 Robert Milkowski */
--
- #include <sys/zfeature.h>
- #include <sys/cred.h>
- #include <sys/zfs_context.h>
-diff --git a/module/zfs/dmu_recv.c b/module/zfs/dmu_recv.c
-index 0130e420237..3480fcbb3af 100644
---- a/module/zfs/dmu_recv.c
-+++ b/module/zfs/dmu_recv.c
-@@ -18,13 +18,17 @@
-  *
-  * CDDL HEADER END
-  */
-+
- /*
-  * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
-- * Copyright 2011 Nexenta Systems, Inc. All rights reserved.
-- * Copyright (c) 2011, 2018 by Delphix. All rights reserved.
-- * Copyright (c) 2014, Joyent, Inc. All rights reserved.
-- * Copyright 2014 HybridCluster. All rights reserved.
-- * Copyright (c) 2018, loli10K <ezomori.nozomu@gmail.com>. All rights reserved.
-+ * Copyright (c) 2011, Nexenta Systems Inc. All rights reserved.
-+ * Copyright (c) 2011, 2018 Delphix. All rights reserved.
-+ * Copyright (c) 2014, Joyent Inc. All rights reserved.
-+ * Copyright (c) 2014, HybridCluster. All rights reserved.
-+ * Copyright (c) 2018, loli10K. All rights reserved.
-+ * Copyright (c) 2019, Klara Inc. All rights reserved.
-+ * Copyright (c) 2019, Allan Jude. All rights reserved.
-+ * Use is subject to license terms.
-  */
- 
- #include <sys/dmu.h>
-diff --git a/module/zfs/dmu_send.c b/module/zfs/dmu_send.c
-index ee37a5c8955..eb312c86756 100644
---- a/module/zfs/dmu_send.c
-+++ b/module/zfs/dmu_send.c
-@@ -18,14 +18,18 @@
-  *
-  * CDDL HEADER END
-  */
-+
- /*
-  * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
-- * Copyright 2011 Nexenta Systems, Inc. All rights reserved.
-- * Copyright (c) 2011, 2018 by Delphix. All rights reserved.
-- * Copyright (c) 2014, Joyent, Inc. All rights reserved.
-- * Copyright 2014 HybridCluster. All rights reserved.
-- * Copyright 2016 RackTop Systems.
-- * Copyright (c) 2016 Actifio, Inc. All rights reserved.
-+ * Copyright (c) 2011, Nexenta Systems, Inc. All rights reserved.
-+ * Copyright (c) 2011, 2018, Delphix. All rights reserved.
-+ * Copyright (c) 2014, Joyent Inc. All rights reserved.
-+ * Copyright (c) 2014, HybridCluster. All rights reserved.
-+ * Copyright (c) 2016, RackTop Systems. All rights reserved.
-+ * Copyright (c) 2016, Actifio Inc. All rights reserved.
-+ * Copyright (c) 2019, Klara Inc. All rights reserved.
-+ * Copyright (c) 2019, Allan Jude. All rights reserved.
-+ * Use is subject to license terms.
-  */
- 
- #include <sys/dmu.h>
-diff --git a/module/zfs/dsl_dataset.c b/module/zfs/dsl_dataset.c
-index 6a27666acf5..6f575cee4c9 100644
---- a/module/zfs/dsl_dataset.c
-+++ b/module/zfs/dsl_dataset.c
-@@ -21,13 +21,16 @@
- 
- /*
-  * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
-- * Copyright (c) 2011, 2018 by Delphix. All rights reserved.
-- * Copyright (c) 2014, Joyent, Inc. All rights reserved.
-- * Copyright (c) 2014 RackTop Systems.
-- * Copyright (c) 2014 Spectra Logic Corporation, All rights reserved.
-- * Copyright (c) 2016 Actifio, Inc. All rights reserved.
-- * Copyright 2016, OmniTI Computer Consulting, Inc. All rights reserved.
-- * Copyright 2017 Nexenta Systems, Inc.
-+ * Copyright (c) 2011, 2018, Delphix. All rights reserved.
-+ * Copyright (c) 2014, Joyent Inc. All rights reserved.
-+ * Copyright (c) 2014, RackTop Systems. All rights reserved.
-+ * Copyright (c) 2014, Spectra Logic Corporation. All rights reserved.
-+ * Copyright (c) 2016, Actifio Inc. All rights reserved.
-+ * Copyright (c) 2016, OmniTI Computer Consulting Inc. All rights reserved.
-+ * Copyright (c) 2017, Nexenta Systems Inc. All rights reserved.
-+ * Copyright (c) 2019, Klara Inc. All rights reserved.
-+ * Copyright (c) 2019, Allan Jude. All rights reserved.
-+ * Use is subject to license terms.
-  */
- 
- #include <sys/dmu_objset.h>
-diff --git a/module/zfs/zcp_get.c b/module/zfs/zcp_get.c
-index b6e80455344..9095d014fe3 100644
---- a/module/zfs/zcp_get.c
-+++ b/module/zfs/zcp_get.c
-@@ -14,7 +14,10 @@
-  */
- 
- /*
-- * Copyright (c) 2016 by Delphix. All rights reserved.
-+ * Copyright (c) 2016, Delphix. All rights reserved.
-+ * Copyright (c) 2019, Klara Inc. All rights reserved.
-+ * Copyright (c) 2019, Allan Jude. All rights reserved.
-+ * Use is subject to license terms.
-  */
- 
- #include <sys/lua/lua.h>
-diff --git a/module/zfs/zfs_ioctl.c b/module/zfs/zfs_ioctl.c
-index 213c7e4042f..9938abd7e26 100644
---- a/module/zfs/zfs_ioctl.c
-+++ b/module/zfs/zfs_ioctl.c
-@@ -21,22 +21,24 @@
- 
- /*
-  * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
-- * Portions Copyright 2011 Martin Matuska
-- * Copyright 2015, OmniTI Computer Consulting, Inc. All rights reserved.
-- * Portions Copyright 2012 Pawel Jakub Dawidek <pawel@dawidek.net>
-- * Copyright (c) 2014, 2016 Joyent, Inc. All rights reserved.
-- * Copyright 2016 Nexenta Systems, Inc.  All rights reserved.
-- * Copyright (c) 2014, Joyent, Inc. All rights reserved.
-- * Copyright (c) 2011, 2018 by Delphix. All rights reserved.
-- * Copyright (c) 2013 by Saso Kiselkov. All rights reserved.
-- * Copyright (c) 2013 Steven Hartland. All rights reserved.
-- * Copyright (c) 2014 Integros [integros.com]
-- * Copyright 2016 Toomas Soome <tsoome@me.com>
-- * Copyright (c) 2016 Actifio, Inc. All rights reserved.
-+ * Copyright (c) 2011, Martin Matuska. All rights reserved.
-+ * Copyright (c) 2015, OmniTI Computer Consulting Inc. All rights reserved.
-+ * Copyright (c) 2012, Pawel Jakub Dawidek. All rights reserved.
-+ * Copyright (c) 2014, 2016, Joyent Inc. All rights reserved.
-+ * Copyright (c) 2016, Nexenta Systems Inc. All rights reserved.
-+ * Copyright (c) 2011, 2018, Delphix. All rights reserved.
-+ * Copyright (c) 2013, Saso Kiselkov. All rights reserved.
-+ * Copyright (c) 2013, Steven Hartland. All rights reserved.
-+ * Copyright (c) 2014, Integros. All rights reserved.
-+ * Copyright (c) 2016, Toomas Soome. All rights reserved.
-+ * Copyright (c) 2016, Actifio Inc. All rights reserved.
-  * Copyright (c) 2018, loli10K <ezomori.nozomu@gmail.com>. All rights reserved.
-- * Copyright 2017 RackTop Systems.
-- * Copyright (c) 2017 Open-E, Inc. All Rights Reserved.
-- * Copyright (c) 2019 Datto Inc.
-+ * Copyright (c) 2017, RackTop Systems. All rights reserved.
-+ * Copyright (c) 2017, Open-E Inc. All Rights Reserved.
-+ * Copyright (c) 2019, Datto Inc. All rights reserved.
-+ * Copyright (c) 2019, Klara Inc. All rights reserved.
-+ * Copyright (c) 2019, Allan Jude. All rights reserved.
-+ * Use is subject to license terms.
-  */
- 
- /*
-diff --git a/module/zfs/zio.c b/module/zfs/zio.c
-index 788913e5bf0..9dfbdeee313 100644
---- a/module/zfs/zio.c
-+++ b/module/zfs/zio.c
-@@ -18,11 +18,15 @@
-  *
-  * CDDL HEADER END
-  */
-+
- /*
-  * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
-- * Copyright (c) 2011, 2019 by Delphix. All rights reserved.
-- * Copyright (c) 2011 Nexenta Systems, Inc. All rights reserved.
-- * Copyright (c) 2017, Intel Corporation.
-+ * Copyright (c) 2011, 2019, Delphix. All rights reserved.
-+ * Copyright (c) 2011, Nexenta Systems Inc. All rights reserved.
-+ * Copyright (c) 2017, Intel Corporation. All rights reserved.
-+ * Copyright (c) 2019, Klara Inc. All rights reserved.
-+ * Copyright (c) 2019, Allan Jude. All rights reserved.
-+ * Use is subject to license terms.
-  */
- 
- #include <sys/sysmacros.h>
-diff --git a/module/zfs/zio_compress.c b/module/zfs/zio_compress.c
-index 27af166a20b..d2481f092f6 100644
---- a/module/zfs/zio_compress.c
-+++ b/module/zfs/zio_compress.c
-@@ -20,16 +20,13 @@
-  */
- 
- /*
-- * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
-+ * Copyright (c) 2009, Sun Microsystems Inc. All rights reserved.
-+ * Copyright (c) 2013, Saso Kiselkov. All rights reserved.
-+ * Copyright (c) 2013, 2018, Delphix. All rights reserved.
-+ * Copyright (c) 2019, Klara Inc. All rights reserved.
-+ * Copyright (c) 2019, Allan Jude. All rights reserved.
-  * Use is subject to license terms.
-  */
--/*
-- * Copyright (c) 2013 by Saso Kiselkov. All rights reserved.
-- */
--
--/*
-- * Copyright (c) 2013, 2018 by Delphix. All rights reserved.
-- */
- 
- #include <sys/zfs_context.h>
- #include <sys/spa.h>
 diff --git a/tests/zfs-tests/include/properties.shlib b/tests/zfs-tests/include/properties.shlib
-index cc37e769d32..03b5938be2b 100644
+index 1b6f5a4e5..e60271e7a 100644
 --- a/tests/zfs-tests/include/properties.shlib
 +++ b/tests/zfs-tests/include/properties.shlib
 @@ -13,7 +13,7 @@
@@ -31732,7 +31422,7 @@ index cc37e769d32..03b5938be2b 100644
      'noparity' 'sha512' 'skein' 'edonr')
  typeset -a recsize_prop_vals=('512' '1024' '2048' '4096' '8192' '16384'
 diff --git a/tests/zfs-tests/tests/functional/cli_root/zpool_get/zpool_get.cfg b/tests/zfs-tests/tests/functional/cli_root/zpool_get/zpool_get.cfg
-index 566a56c1a78..35f1230f129 100644
+index 566a56c1a..35f1230f1 100644
 --- a/tests/zfs-tests/tests/functional/cli_root/zpool_get/zpool_get.cfg
 +++ b/tests/zfs-tests/tests/functional/cli_root/zpool_get/zpool_get.cfg
 @@ -93,5 +93,6 @@ if is_linux || is_freebsd; then
@@ -31743,7 +31433,7 @@ index 566a56c1a78..35f1230f129 100644
  	)
  fi
 diff --git a/tests/zfs-tests/tests/functional/history/history_002_pos.ksh b/tests/zfs-tests/tests/functional/history/history_002_pos.ksh
-index 7055413e848..f57a3c3ebec 100755
+index 7055413e8..f57a3c3eb 100755
 --- a/tests/zfs-tests/tests/functional/history/history_002_pos.ksh
 +++ b/tests/zfs-tests/tests/functional/history/history_002_pos.ksh
 @@ -86,7 +86,9 @@ props=(
@@ -31757,3 +31447,6 @@ index 7055413e848..f57a3c3ebec 100755
  )
  elif is_freebsd; then
  #	property	value		property	value
+-- 
+2.17.1
+

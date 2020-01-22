@@ -34,6 +34,7 @@ init-debian-openrc-workaround.patch
 #9735_Introduce_ZSTD_compression_to_ZFS.patch
 9867-redaction-memory-leak-fix-error-message-improvements.patch
 9835_Port_over_FreeBSD_zfs_holds_functionality.patch
+9735_Introduce_ZSTD_compression_to_ZFS.patch
 
 0001terem-zed-service-start-stop-fix-for-tests-conducted-using.patch
 0002terem-added-known-to-skip-tests-on-github-worflow-vm.patch

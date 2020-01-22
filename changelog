@@ -1,8 +1,9 @@
 zfs-linux (0.8.3-1terem6) bionic; urgency=medium
 
-  * added 9807_Add_Linux_posix_fadvise_support patch
-  * updated 9749terem_updated_ICP_Improve_AES_GCM_performance patch
-  * master commit 5206b8228e17a2505c7a1af071135c753cc82d75
+  * added 9807 Add Linux posix fadvise support patch
+  * updated 9749 ICP Improve_AES_GCM_performance patch
+  * added 9735 Introduce ZSTD compression to ZFS patch 
+  * master commit ref 79add9676
 
  -- Andrey (apt.terem.fr) <job@terem.fr>  Wed, 21 Jan 2020 20:57:00 -0100
 
