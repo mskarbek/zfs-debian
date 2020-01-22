@@ -1,4 +1,4 @@
-From dc6eff73df17d2d9b927316d848cfa81eb626448 Mon Sep 17 00:00:00 2001
+From 805415fcffb6522b9031140d198d2b74637c097d Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Michael=20Niew=C3=B6hner?= <foss@mniewoehner.de>
 Date: Sun, 1 Dec 2019 01:28:44 +0100
 Subject: [PATCH] This PR introduces ZSTD compression to ZFS.
@@ -16,14 +16,14 @@ Additional testing, validation and review by @dan-and and @Ornias1993 see: Test 
 Restructure and Refactor by @c0d3z3r0 and @BrainSlayer see: This PR
 PR description and documentation by @Ornias1993 see: This PR
 
-Co-authored-by: Allan Jude <allanjude@freebsd.org>
-Co-authored-by: Sebastian Gottschall <s.gottschall@dd-wrt.com>
-Co-authored-by: Kjeld Schouten-Lebbing <kjeld@schouten-lebbing.nl>
-Co-authored-by: Michael Niewöhner <foss@mniewoehner.de>
-Signed-off-by: Allan Jude <allanjude@freebsd.org>
-Signed-off-by: Sebastian Gottschall <s.gottschall@dd-wrt.com>
-Signed-off-by: Kjeld Schouten-Lebbing <kjeld@schouten-lebbing.nl>
-Signed-off-by: Michael Niewöhner <foss@mniewoehner.de>
+Co-authored-by: Allan Jude allanjude@freebsd.org
+Co-authored-by: Sebastian Gottschall s.gottschall@dd-wrt.com
+Co-authored-by: Kjeld Schouten-Lebbing kjeld@schouten-lebbing.nl
+Co-authored-by: Michael Niewöhner foss@mniewoehner.de
+Signed-off-by: Allan Jude allanjude@freebsd.org
+Signed-off-by: Sebastian Gottschall s.gottschall@dd-wrt.com
+Signed-off-by: Kjeld Schouten-Lebbing kjeld@schouten-lebbing.nl
+Signed-off-by: Michael Niewöhner foss@mniewoehner.de
 ---
  Makefile.am                                   |    3 +-
  cmd/dbufstat/dbufstat                         |    2 +-
