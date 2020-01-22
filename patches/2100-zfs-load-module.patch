@@ -30,6 +30,7 @@ Index: zfs-linux-0.8.2/etc/systemd/system/zfs-import-cache.service.in
  After=systemd-udev-settle.service
 +After=zfs-load-module.service
  After=cryptsetup.target
+ After=multipathd.target
  After=systemd-remount-fs.service
  Before=zfs-import.target
 Index: zfs-linux-0.8.2/etc/systemd/system/zfs-import-scan.service.in
@@ -44,6 +45,7 @@ Index: zfs-linux-0.8.2/etc/systemd/system/zfs-import-scan.service.in
  After=systemd-udev-settle.service
 +Requires=zfs-load-module.service
  After=cryptsetup.target
+ After=multipathd.target
  Before=zfs-import.target
  ConditionPathExists=!@sysconfdir@/zfs/zpool.cache
 Index: zfs-linux-0.8.2/etc/systemd/system/zfs-load-module.service.in
