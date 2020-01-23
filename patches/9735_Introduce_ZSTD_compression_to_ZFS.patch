@@ -36,7 +36,7 @@ Signed-off-by: Michael Niewöhner foss@mniewoehner.de
  contrib/zstd/README.md                        |   24 +
  contrib/zstd/THIRDPARTYLICENSE                |   30 +
  contrib/zstd/THIRDPARTYLICENSE.gplv2          |  339 ++
- contrib/zstd/common/Makefile.am               |    0
+ contrib/zstd/common/Makefile.am               |    1 +
  contrib/zstd/common/bitstream.h               |  460 ++
  contrib/zstd/common/compiler.h                |  159 +
  contrib/zstd/common/cpu.h                     |  215 +
@@ -58,7 +58,7 @@ Signed-off-by: Michael Niewöhner foss@mniewoehner.de
  contrib/zstd/common/zstd_common.c             |   83 +
  contrib/zstd/common/zstd_errors.h             |   93 +
  contrib/zstd/common/zstd_internal.h           |  350 ++
- contrib/zstd/compress/Makefile.am             |    0
+ contrib/zstd/compress/Makefile.am             |    1 +
  contrib/zstd/compress/fse_compress.c          |  721 +++
  contrib/zstd/compress/hist.c                  |  203 +
  contrib/zstd/compress/hist.h                  |   95 +
@@ -82,7 +82,7 @@ Signed-off-by: Michael Niewöhner foss@mniewoehner.de
  contrib/zstd/compress/zstd_opt.h              |   56 +
  contrib/zstd/compress/zstdmt_compress.c       | 2116 +++++++++
  contrib/zstd/compress/zstdmt_compress.h       |  192 +
- contrib/zstd/decompress/Makefile.am           |    0
+ contrib/zstd/decompress/Makefile.am           |    2 +
  contrib/zstd/decompress/huf_decompress.c      | 1234 +++++
  contrib/zstd/decompress/zstd_ddict.c          |  240 +
  contrib/zstd/decompress/zstd_ddict.h          |   44 +
@@ -143,7 +143,7 @@ Signed-off-by: Michael Niewöhner foss@mniewoehner.de
  tests/zfs-tests/include/properties.shlib      |    2 +-
  .../cli_root/zpool_get/zpool_get.cfg          |    1 +
  .../functional/history/history_002_pos.ksh    |    4 +-
- 118 files changed, 29419 insertions(+), 204 deletions(-)
+ 118 files changed, 29423 insertions(+), 204 deletions(-)
  create mode 100644 contrib/zstd/.gitignore
  create mode 100644 contrib/zstd/Makefile.am
  create mode 100644 contrib/zstd/README.md
@@ -752,7 +752,11 @@ index 000000000..ecbc05937
 \ No newline at end of file
 diff --git a/contrib/zstd/common/Makefile.am b/contrib/zstd/common/Makefile.am
 new file mode 100644
-index 000000000..e69de29bb
+index 000000000..744f66f96
+--- /dev/null
++++ b/contrib/zstd/common/Makefile.am
+@@ -0,0 +1 @@
++# to be generated
 diff --git a/contrib/zstd/common/bitstream.h b/contrib/zstd/common/bitstream.h
 new file mode 100644
 index 000000000..1c294b80d
@@ -6504,7 +6508,11 @@ index 000000000..dcdcbdb81
 +#endif   /* ZSTD_CCOMMON_H_MODULE */
 diff --git a/contrib/zstd/compress/Makefile.am b/contrib/zstd/compress/Makefile.am
 new file mode 100644
-index 000000000..e69de29bb
+index 000000000..744f66f96
+--- /dev/null
++++ b/contrib/zstd/compress/Makefile.am
+@@ -0,0 +1 @@
++# to be generated
 diff --git a/contrib/zstd/compress/fse_compress.c b/contrib/zstd/compress/fse_compress.c
 new file mode 100644
 index 000000000..68b47e109
@@ -21319,7 +21327,12 @@ index 000000000..12a526087
 +#endif   /* ZSTDMT_COMPRESS_H */
 diff --git a/contrib/zstd/decompress/Makefile.am b/contrib/zstd/decompress/Makefile.am
 new file mode 100644
-index 000000000..e69de29bb
+index 000000000..a47044e78
+--- /dev/null
++++ b/contrib/zstd/decompress/Makefile.am
+@@ -0,0 +1,2 @@
++# to be generated
++
 diff --git a/contrib/zstd/decompress/huf_decompress.c b/contrib/zstd/decompress/huf_decompress.c
 new file mode 100644
 index 000000000..bb2d0a96b
