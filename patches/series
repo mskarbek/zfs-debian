@@ -36,5 +36,5 @@ init-debian-openrc-workaround.patch
 9902_Convert_dbuf_dirty_record_record_list_to_a_list_t.patch
 
 0001terem-zed-service-start-stop-fix-for-tests-conducted-using.patch
-0002terem-added-known-to-skip-tests-on-github-worflow-vm.patch
+#0002terem-added-known-to-skip-tests-on-github-worflow-vm.patch
 
