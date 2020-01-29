@@ -33,7 +33,7 @@ init-debian-openrc-workaround.patch
 #9867-redaction-memory-leak-fix-error-message-improvements.patch
 9835_Port_over_FreeBSD_zfs_holds_functionality.patch
 #9735_Introduce_ZSTD_compression_to_ZFS.patch
-9902_Convert_dbuf_dirty_record_record_list_to_a_list_t.patch
+#9902_Convert_dbuf_dirty_record_record_list_to_a_list_t.patch
 #9735_Introduce_ZSTD_compression_to_ZFS.patch
 
 terem-0001-zed-service-start-stop-fix-for-tests-conducted-using.patch
