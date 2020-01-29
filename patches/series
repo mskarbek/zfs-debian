@@ -37,7 +37,8 @@ init-debian-openrc-workaround.patch
 #9735_Introduce_ZSTD_compression_to_ZFS.patch
 
 terem-0001-zed-service-start-stop-fix-for-tests-conducted-using.patch
-
 terem-0002-added-known-to-skip-tests-on-github-workflow-vm.patch
+
+9909_Factor_out_dbuf_sync_bonus.patch
 
 
