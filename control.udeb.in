@@ -63,6 +63,7 @@ Depends: libnvpair1-udeb (= ${binary:Version}),
          libuutil1-udeb (= ${binary:Version}),
          libzfs2-udeb (= ${binary:Version}),
          libzpool2-udeb (= ${binary:Version}),
+         zfs-modules,
          ${misc:Depends},
          ${shlibs:Depends}
 Description: command-line tools to manage OpenZFS filesystems (debian-installer)

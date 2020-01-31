@@ -1,61 +1,49 @@
-zfs-linux (0.8.3-1terem6) bionic; urgency=medium
+zfs-linux (0.8.3-1) unstable; urgency=medium
 
-  * added 9807 Add Linux posix fadvise support patch
-  * updated 9749 ICP Improve_AES_GCM_performance patch
-  * updated 2100 zfs load module patch
-  * master commit ref 79add9676
+  * New upstream version 0.8.3
+  * Remove the seven upstreamed/cherry-picked patches.
+  * Mark zfs-import.service as not-installed.
+  * Refresh symbol control files.
+  * Add NEWS entry about SIMD and parallel KABI checks.
 
- -- Andrey (apt.terem.fr) <job@terem.fr>  Wed, 21 Jan 2020 20:57:00 -0100
+ -- Mo Zhou <lumin@debian.org>  Sat, 25 Jan 2020 15:58:35 +0800
 
-zfs-linux (0.8.3-1terem5) bionic; urgency=medium
+zfs-linux (0.8.2-5) unstable; urgency=medium
 
-  * merge zfs debian repo 0.8.2 to zfs master
+  * Remove old+unused SIMD patches; Move the openrc patch to "unapplied" dir.
+  * Correct zpool scrubing oneliner in crontab. (Closes: #946748)
+    Thanks to Dirk Heinrichs. Reviewed by Richard Laager.
+  * Cherry-pick: fix-automount-for-root-filesystems.patch (Closes: #945585)
+  * Add patch headers to patches without them.
+  * Override a series of lintian Info.
+  * Bump Standards-Version to 4.4.1 (no change).
+  * Update my mail address in control and copyright.
 
- -- Andrey (apt.terem.fr) <job@terem.fr>  Wed, 10 Jan 2020 09:42:52 -0100
+ -- Mo Zhou <lumin@debian.org>  Tue, 21 Jan 2020 20:39:26 +0800
 
-zfs-linux (0.8.2-3ubuntu4) focal; urgency=medium
+zfs-linux (0.8.2-4) unstable; urgency=medium
 
-  * debian/patches/initramfs-setup-keymapping-and-video-for-
-    prompts.patch: initramfs: setup keymapping and video for prompts. 
-    Thanks to Richard Laager <rlaager@wiktel.com>.  Closes LP: #1856408.
+  [ Colin Ian King ]
+  * etc-defaults-zfs-notice.patch: fix "unexpected end of diff".
 
- -- Steve Langasek <steve.langasek@ubuntu.com>  Mon, 16 Dec 2019 09:42:52 -0800
+  [ Steve Langasek ]
+  * initramfs: setup keymapping and video for prompts. (LP: #1856408)
 
-zfs-linux (0.8.2-3ubuntu3) focal; urgency=medium
-
+  [ Heitor Alves de Siqueira ]
   * Fix livelock between ZFS evict and writeback threads (LP: #1856084)
-    - Upstream ZFS fix 41e1aa2a06f8 ("Break out of zfs_zget early if unlinked
-      znode")
-    - Upstream ZFS fix 0c46813805f4 ("Check for unlinked znodes after
-      igrab()")
+    - Upstream 41e1aa2a06f8 "Break out of zfs_zget early if unlinked znode"
+    - Upstream 0c46813805f4 "Check for unlinked znodes after igrab()"
+    (Closes: #946610)
 
- -- Heitor Alves de Siqueira <halves@canonical.com>  Fri, 13 Dec 2019 11:27:39 -0300
+  [ Mo Zhou ]
+  * Autopkgtest: Remove the vendor tests from binary-debs* tests
+    and the dkms-zfs-test.
+  * Merge 2 upstreamed patches from ubuntu diff (0.8.2-3ubuntu1)
+    + 4501-fix-var-lib-race.patch
+    + 4600-diff_cb-does-not-handle-large-dnodes.patch
+  * Don't restart zfs-{import*,mount} on/after upgrade. (Closes: #923377)
 
-zfs-linux (0.8.2-3ubuntu2) focal; urgency=medium
-
-  * etc-defaults-zfs-notice.patch: fix a dpkg-source warning "unexpected 
-    end of diff" by refreshing patch
-
- -- Colin Ian King <colin.king@canonical.com>  Wed, 27 Nov 2019 15:37:23 +0000
-
-zfs-linux (0.8.2-3ubuntu1) focal; urgency=medium
-
-  * debian/tests/dkms-zfs-test: remove Debian dpkg-vendor check
-  * debian/tests/binary-debs-modules: remove Debian dpkg-vendor check
-  * debian/tests/binary-debs-modules-udeb: remove Debian dpkg-vendor check
-  * debian/tests/control: remove extraneous dkms testing as Ubuntu has
-    the drivers built in the kernel
-  * debian/control.udeb.in: remove zfs-modules from zfsutils-udeb Depends
-  * debian/control:
-    - zfs-initramfs: architectures: amd64 arm64 ppc64el s390
-    - zfs-initramfs: Depends: remove zfs-modules | zfs-dkms
-    - zfs-dracut: Depends: remove zfs-modules | zfs-dkms
-    - zfs-dracut: architectures: amd64 arm64 ppc64el s390
-    - zfsutils-linux: Recommends: remove zfs-modules | zfs-dkms
-    - zfs-zed: Depends: remove zfs-modules | zfs-dkms
-    - zfs-test: Depends: remove zfs-modules | zfs-dkms
-
- -- Colin Ian King <colin.king@canonical.com>  Tue, 12 Nov 2019 10:00:00 +0000
+ -- Mo Zhou <cdluminate@gmail.com>  Thu, 19 Dec 2019 21:25:28 +0800
 
 zfs-linux (0.8.2-3) unstable; urgency=medium
 
@@ -97,7 +85,7 @@ zfs-linux (0.8.2-1) unstable; urgency=medium
      - 2000-increase-default-zcmd-allocation-to-256K.patch
      - git_fix_mount_race.patch
   * Disable linux-5.0-simd-compat.patch due to its incorrect assumption that
-    may lead to system instability when SIMD is enabled. (Closes: #940932) 
+    may lead to system instability when SIMD is enabled. (Closes: #940932)
     See also https://github.com/zfsonlinux/zfs/issues/9346
   * Install new service that waits on zvol links to be created (gh#8975).
   * Remove unused control variable ${python3:Depends} for zfsutils-linux.
