@@ -42,5 +42,3 @@ terem-0004-add-ZSTD-compression.patch
 
 #10029-ICP-gcm-avx-Support-architectures-lacking-the-MOVBE.patch
 #10034-improve-zfs-destroy-performance.patch
-
-#9909_Factor_out_dbuf_sync_bonus.patch
