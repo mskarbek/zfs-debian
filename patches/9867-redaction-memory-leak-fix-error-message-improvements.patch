@@ -1,0 +1,110 @@
+From e8e9e3d7e9168f0d6c8c0daed1d7195ad72f1c07 Mon Sep 17 00:00:00 2001
+From: Christian Schwarz <me@cschwarz.com>
+Date: Sat, 23 Nov 2019 16:31:38 +0100
+Subject: [PATCH] redaction: memory leak fix + error message improvements
+ Signed-off-by: Christian Schwarz <me@cschwarz.com>
+
+---
+ cmd/zfs/zfs_main.c                            | 19 +++++++++++++++++--
+ module/zfs/dmu_send.c                         | 12 ++++++------
+ .../redacted_send/redacted_negative.ksh       | 12 ++++++++++++
+ 3 files changed, 35 insertions(+), 8 deletions(-)
+
+diff --git a/cmd/zfs/zfs_main.c b/cmd/zfs/zfs_main.c
+index 2bf2b6cf9..0d26b512c 100644
+--- a/cmd/zfs/zfs_main.c
++++ b/cmd/zfs/zfs_main.c
+@@ -3746,8 +3746,13 @@ zfs_do_redact(int argc, char **argv)
+ 		    "specified\n"));
+ 		break;
+ 	case EINVAL:
+-		(void) fprintf(stderr, gettext("redaction snapshot must be "
+-		    "descendent of snapshot being redacted\n"));
++		if (strchr(bookname, '#') != NULL)
++			(void) fprintf(stderr, gettext(
++			    "redaction bookmark name must not contain '#'\n"));
++		else
++			(void) fprintf(stderr, gettext(
++			    "redaction snapshot must be descendent of"
++			    " snapshot being redacted\n"));
+ 		break;
+ 	case EALREADY:
+ 		(void) fprintf(stderr, gettext("attempted to redact redacted "
+@@ -3757,6 +3762,10 @@ zfs_do_redact(int argc, char **argv)
+ 		(void) fprintf(stderr, gettext("redaction bookmarks feature "
+ 		    "not enabled\n"));
+ 		break;
++	case EXDEV:
++		(void) fprintf(stderr, gettext("potentially invalid redaction"
++		    " snapshot; full dataset names required\n"));
++		break;
+ 	default:
+ 		(void) fprintf(stderr, gettext("internal error: %s\n"),
+ 		    strerror(errno));
+@@ -4403,6 +4412,12 @@ zfs_do_send(int argc, char **argv)
+ 				    "do a redacted send to a filesystem.\n"));
+ 				return (1);
+ 			}
++			if (strchr(redactbook, '#') != NULL) {
++				(void) fprintf(stderr, gettext("Error: "
++				    "redaction bookmark argument must "
++				    "not contain '#'\n"));
++				return (1);
++			}
+ 		}
+ 
+ 		zhp = zfs_open(g_zfs, argv[0], ZFS_TYPE_DATASET);
+diff --git a/module/zfs/dmu_send.c b/module/zfs/dmu_send.c
+index 62de978d3..469959302 100644
+--- a/module/zfs/dmu_send.c
++++ b/module/zfs/dmu_send.c
+@@ -2342,12 +2342,6 @@ dmu_send_impl(struct dmu_send_params *dspp)
+ 		return (err);
+ 	}
+ 
+-	from_arg = kmem_zalloc(sizeof (*from_arg), KM_SLEEP);
+-	to_arg = kmem_zalloc(sizeof (*to_arg), KM_SLEEP);
+-	rlt_arg = kmem_zalloc(sizeof (*rlt_arg), KM_SLEEP);
+-	smt_arg = kmem_zalloc(sizeof (*smt_arg), KM_SLEEP);
+-	spt_arg = kmem_zalloc(sizeof (*spt_arg), KM_SLEEP);
+-
+ 	/*
+ 	 * If we're doing a redacted send, hold the bookmark's redaction list.
+ 	 */
+@@ -2382,6 +2376,12 @@ dmu_send_impl(struct dmu_send_params *dspp)
+ 
+ 	dsl_dataset_long_hold(to_ds, FTAG);
+ 
++	from_arg = kmem_zalloc(sizeof (*from_arg), KM_SLEEP);
++	to_arg = kmem_zalloc(sizeof (*to_arg), KM_SLEEP);
++	rlt_arg = kmem_zalloc(sizeof (*rlt_arg), KM_SLEEP);
++	smt_arg = kmem_zalloc(sizeof (*smt_arg), KM_SLEEP);
++	spt_arg = kmem_zalloc(sizeof (*spt_arg), KM_SLEEP);
++
+ 	drr = create_begin_record(dspp, os, featureflags);
+ 	dssp = setup_send_progress(dspp);
+ 
+diff --git a/tests/zfs-tests/tests/functional/redacted_send/redacted_negative.ksh b/tests/zfs-tests/tests/functional/redacted_send/redacted_negative.ksh
+index e27eb601e..5ea65e3e7 100755
+--- a/tests/zfs-tests/tests/functional/redacted_send/redacted_negative.ksh
++++ b/tests/zfs-tests/tests/functional/redacted_send/redacted_negative.ksh
+@@ -77,4 +77,16 @@ log_mustnot zfs redact $recvfs@snap book5 $clone3@snap
+ # Nor may a redacted dataset appear in the redaction list.
+ log_mustnot zfs redact testpool2/recvfs@snap2 book7 testpool2/recvfs@snap
+ 
++# Non-redaction bookmark cannot be sent and produces invalid argument error
++log_must zfs bookmark "$sendfs@snap1" "$sendfs#book8"
++log_must eval "zfs send --redact book8 -i $sendfs@snap1 $sendfs@snap2 2>&1 | head -n 100 | grep 'internal error: Invalid argument'"
++
++# Error messages for common usage errors
++log_mustnot_expect "not contain '#'"    zfs redact $sendfs@snap1 \#book $sendfs@snap2
++log_mustnot_expect "not contain '#'"    zfs redact $sendfs@snap1 $sendfs#book $sendfs@snap2
++log_mustnot_expect "full dataset names" zfs redact $sendfs@snap1 book @snap2
++log_mustnot_expect "full dataset names" zfs redact $sendfs@snap1 book @snap2
++log_mustnot_expect "full dataset names" zfs redact $sendfs@snap1 \#book @snap2
++log_mustnot_expect "descendent of snapshot" zfs redact $sendfs@snap2 book $sendfs@snap1
++
+ log_pass "Verify that redacted send correctly detects invalid arguments."
+-- 
+2.17.1
+

@@ -1,0 +1,37 @@
+From 795d7c593c9f3c312e7774ed3103a44f6ec91c90 Mon Sep 17 00:00:00 2001
+From: Andrey Prokopenko <9478806+andrey42@users.noreply.github.com>
+Date: Sat, 25 Apr 2020 20:21:47 +0200
+Subject: [PATCH] added know to skip tests
+
+---
+ tests/test-runner/bin/zts-report.py | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/tests/test-runner/bin/zts-report.py b/tests/test-runner/bin/zts-report.py
+index d74aa9d7a..efb55bc7a 100755
+--- a/tests/test-runner/bin/zts-report.py
++++ b/tests/test-runner/bin/zts-report.py
+@@ -127,6 +127,9 @@ trim_reason = 'DISKS must support discard (TRIM/UNMAP)'
+ #
+ na_reason = "Not applicable"
+ 
++# cannot propery execute on Github Actions
++github_actions_vm_skip_reason = 'known to be skipped on Github Actions virtual machines'
++
+ summary = {
+     'total': float(0),
+     'passed': float(0),
+@@ -239,6 +242,10 @@ maybe = {
+     'userquota/setup': ['SKIP', exec_reason],
+     'vdev_zaps/vdev_zaps_004_pos': ['FAIL', '6935'],
+     'zvol/zvol_ENOSPC/zvol_ENOSPC_001_pos': ['FAIL', '5848'],
++    'cli_root/zpool_reopen/zpool_reopen_004_pos': ['FAIL',github_actions_vm_skip_reason],
++    'reservation/reservation_013_pos': ['FAIL',github_actions_vm_skip_reason],
++    'reservation/reservation_015_pos': ['FAIL',github_actions_vm_skip_reason],
++    'reservation/reservation_016_pos': ['FAIL',github_actions_vm_skip_reason],
+ }
+ 
+ if sys.platform.startswith('freebsd'):
+-- 
+2.24.0.windows.2
+

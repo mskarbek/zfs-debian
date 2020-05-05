@@ -1,0 +1,539 @@
+From 6ee47af23b3d492e3961e4bed3714dfdd117a6b4 Mon Sep 17 00:00:00 2001
+From: "Adam D. Moss" <c@yotes.com>
+Date: Tue, 18 Feb 2020 15:13:16 -0800
+Subject: [PATCH] WIP gcm asm support for earlier x86_64 CPU models
+
+---
+ lib/libicp/Makefile.am                        |   3 +-
+ module/icp/Makefile.in                        |   6 +-
+ module/icp/algs/modes/gcm.c                   |  57 +++++++--
+ ...ni-gcm-x86_64.S => aesni-gcm-x86_64.inc.S} | 108 ++++++-----------
+ .../asm-x86_64/modes/aesni-gcm-x86_64_bswap.S | 110 ++++++++++++++++++
+ .../asm-x86_64/modes/aesni-gcm-x86_64_movbe.S |  15 +++
+ module/icp/include/modes/modes.h              |   2 +-
+ 7 files changed, 215 insertions(+), 86 deletions(-)
+ rename module/icp/asm-x86_64/modes/{aesni-gcm-x86_64.S => aesni-gcm-x86_64.inc.S} (92%)
+ create mode 100644 module/icp/asm-x86_64/modes/aesni-gcm-x86_64_bswap.S
+ create mode 100644 module/icp/asm-x86_64/modes/aesni-gcm-x86_64_movbe.S
+
+diff --git a/lib/libicp/Makefile.am b/lib/libicp/Makefile.am
+index fad91e13c..2804ab94b 100644
+--- a/lib/libicp/Makefile.am
++++ b/lib/libicp/Makefile.am
+@@ -15,7 +15,8 @@ ASM_SOURCES_AS = \
+ 	asm-x86_64/aes/aes_amd64.S \
+ 	asm-x86_64/aes/aes_aesni.S \
+ 	asm-x86_64/modes/gcm_pclmulqdq.S \
+-	asm-x86_64/modes/aesni-gcm-x86_64.S \
++	asm-x86_64/modes/aesni-gcm-x86_64_bswap.S \
++	asm-x86_64/modes/aesni-gcm-x86_64_movbe.S \
+ 	asm-x86_64/modes/ghash-x86_64.S \
+ 	asm-x86_64/sha1/sha1-x86_64.S \
+ 	asm-x86_64/sha2/sha256_impl.S \
+diff --git a/module/icp/Makefile.in b/module/icp/Makefile.in
+index 51e69bd7d..bf3f0b52e 100644
+--- a/module/icp/Makefile.in
++++ b/module/icp/Makefile.in
+@@ -51,7 +51,8 @@ $(MODULE)-$(CONFIG_X86_64) += asm-x86_64/aes/aeskey.o
+ $(MODULE)-$(CONFIG_X86_64) += asm-x86_64/aes/aes_amd64.o
+ $(MODULE)-$(CONFIG_X86_64) += asm-x86_64/aes/aes_aesni.o
+ $(MODULE)-$(CONFIG_X86_64) += asm-x86_64/modes/gcm_pclmulqdq.o
+-$(MODULE)-$(CONFIG_X86_64) += asm-x86_64/modes/aesni-gcm-x86_64.o
++$(MODULE)-$(CONFIG_X86_64) += asm-x86_64/modes/aesni-gcm-x86_64_movbe.o
++$(MODULE)-$(CONFIG_X86_64) += asm-x86_64/modes/aesni-gcm-x86_64_bswap.o
+ $(MODULE)-$(CONFIG_X86_64) += asm-x86_64/modes/ghash-x86_64.o
+ $(MODULE)-$(CONFIG_X86_64) += asm-x86_64/sha1/sha1-x86_64.o
+ $(MODULE)-$(CONFIG_X86_64) += asm-x86_64/sha2/sha256_impl.o
+@@ -65,7 +66,8 @@ $(MODULE)-$(CONFIG_X86) += algs/aes/aes_impl_x86-64.o
+ # are caused by the constants which are defined in the text section of the
+ # assembly file using .byte instructions (e.g. bswap_mask).  The objtool
+ # utility tries to interpret them as opcodes and obviously fails doing so.
+-OBJECT_FILES_NON_STANDARD_aesni-gcm-x86_64.o := y
++OBJECT_FILES_NON_STANDARD_aesni-gcm-x86_64_movbe.o := y
++OBJECT_FILES_NON_STANDARD_aesni-gcm-x86_64_bswap.o := y
+ OBJECT_FILES_NON_STANDARD_ghash-x86_64.o := y
+ 
+ ICP_DIRS = \
+diff --git a/module/icp/algs/modes/gcm.c b/module/icp/algs/modes/gcm.c
+index d20a079ad..a517787c8 100644
+--- a/module/icp/algs/modes/gcm.c
++++ b/module/icp/algs/modes/gcm.c
+@@ -1042,18 +1042,26 @@ extern void gcm_init_htab_avx(uint64_t Htable[16][2], const uint64_t H[2]);
+ extern void gcm_ghash_avx(uint64_t ghash[2], const uint64_t Htable[16][2],
+     const uint8_t *in, size_t len);
+ 
+-extern size_t aesni_gcm_encrypt(const uint8_t *, uint8_t *, size_t,
++extern size_t aesni_gcm_encrypt_bswap(const uint8_t *, uint8_t *, size_t,
+     const void *, uint64_t *, uint64_t *);
+ 
+-extern size_t aesni_gcm_decrypt(const uint8_t *, uint8_t *, size_t,
++extern size_t aesni_gcm_decrypt_bswap(const uint8_t *, uint8_t *, size_t,
+     const void *, uint64_t *, uint64_t *);
+ 
++#if defined(HAVE_MOVBE)
++extern size_t aesni_gcm_encrypt_movbe(const uint8_t *, uint8_t *, size_t,
++    const void *, uint64_t *, uint64_t *);
++
++extern size_t aesni_gcm_decrypt_movbe(const uint8_t *, uint8_t *, size_t,
++    const void *, uint64_t *, uint64_t *);
++#endif /* defined(HAVE_MOVBE) */
++
+ static inline boolean_t
+ gcm_avx_will_work(void)
+ {
+ 	/* Avx should imply aes-ni and pclmulqdq, but make sure anyhow. */
+ 	return (kfpu_allowed() &&
+-	    zfs_avx_available() && zfs_movbe_available() &&
++	    zfs_avx_available() &&
+ 	    zfs_aes_available() && zfs_pclmulqdq_available());
+ }
+ 
+@@ -1116,6 +1124,11 @@ static int
+ gcm_mode_encrypt_contiguous_blocks_avx(gcm_ctx_t *ctx, char *data,
+     size_t length, crypto_data_t *out, size_t block_size)
+ {
++#if defined(HAVE_MOVBE)
++	/* movbe-using variant of encryption/decryption is
++	   faster where available */
++	const boolean_t movbe_ok = zfs_movbe_available();
++#endif /* defined(HAVE_MOVBE) */
+ 	size_t bleft = length;
+ 	size_t need = 0;
+ 	size_t done = 0;
+@@ -1191,7 +1204,13 @@ gcm_mode_encrypt_contiguous_blocks_avx(gcm_ctx_t *ctx, char *data,
+ 	/* Do the bulk encryption in chunk_size blocks. */
+ 	for (; bleft >= chunk_size; bleft -= chunk_size) {
+ 		kfpu_begin();
+-		done = aesni_gcm_encrypt(
++#if defined(HAVE_MOVBE)
++		if (movbe_ok)
++			done = aesni_gcm_encrypt_movbe(
++		    datap, ct_buf, chunk_size, key, cb, ghash);
++		else
++#endif /* defined(HAVE_MOVBE) */
++		done = aesni_gcm_encrypt_bswap(
+ 		    datap, ct_buf, chunk_size, key, cb, ghash);
+ 
+ 		clear_fpu_regs();
+@@ -1217,7 +1236,14 @@ gcm_mode_encrypt_contiguous_blocks_avx(gcm_ctx_t *ctx, char *data,
+ 	/* Bulk encrypt the remaining data. */
+ 	kfpu_begin();
+ 	if (bleft >= GCM_AVX_MIN_ENCRYPT_BYTES) {
+-		done = aesni_gcm_encrypt(datap, ct_buf, bleft, key, cb, ghash);
++#if defined(HAVE_MOVBE)
++		if (movbe_ok)
++			done = aesni_gcm_encrypt_movbe(
++				datap, ct_buf, bleft, key, cb, ghash);
++		else
++#endif /* defined(HAVE_MOVBE) */
++		done = aesni_gcm_encrypt_bswap(
++			datap, ct_buf, bleft, key, cb, ghash);
+ 		if (done == 0) {
+ 			rv = CRYPTO_FAILED;
+ 			goto out;
+@@ -1344,6 +1370,11 @@ gcm_decrypt_final_avx(gcm_ctx_t *ctx, crypto_data_t *out, size_t block_size)
+ 	ASSERT3U(ctx->gcm_processed_data_len, ==, ctx->gcm_pt_buf_len);
+ 	ASSERT3U(block_size, ==, 16);
+ 
++#if defined(HAVE_MOVBE)
++	/* movbe-using variant of encryption/decryption is
++	   faster where available */
++	const boolean_t movbe_ok = zfs_movbe_available();
++#endif /* defined(HAVE_MOVBE) */
+ 	size_t chunk_size = (size_t)GCM_CHUNK_SIZE_READ;
+ 	size_t pt_len = ctx->gcm_processed_data_len - ctx->gcm_tag_len;
+ 	uint8_t *datap = ctx->gcm_pt_buf;
+@@ -1361,7 +1392,13 @@ gcm_decrypt_final_avx(gcm_ctx_t *ctx, crypto_data_t *out, size_t block_size)
+ 	 */
+ 	for (bleft = pt_len; bleft >= chunk_size; bleft -= chunk_size) {
+ 		kfpu_begin();
+-		done = aesni_gcm_decrypt(datap, datap, chunk_size,
++#if defined(HAVE_MOVBE)
++		if (movbe_ok)
++			done = aesni_gcm_decrypt_movbe(datap, datap, chunk_size,
++		    (const void *)key, ctx->gcm_cb, ghash);
++		else
++#endif /* defined(HAVE_MOVBE) */
++		done = aesni_gcm_decrypt_bswap(datap, datap, chunk_size,
+ 		    (const void *)key, ctx->gcm_cb, ghash);
+ 		clear_fpu_regs();
+ 		kfpu_end();
+@@ -1373,7 +1410,13 @@ gcm_decrypt_final_avx(gcm_ctx_t *ctx, crypto_data_t *out, size_t block_size)
+ 	/* Decrypt remainder, which is less then chunk size, in one go. */
+ 	kfpu_begin();
+ 	if (bleft >= GCM_AVX_MIN_DECRYPT_BYTES) {
+-		done = aesni_gcm_decrypt(datap, datap, bleft,
++#if defined(HAVE_MOVBE)
++		if (movbe_ok)
++			done = aesni_gcm_decrypt_movbe(datap, datap, bleft,
++		    (const void *)key, ctx->gcm_cb, ghash);
++		else
++#endif /* defined(HAVE_MOVBE) */
++		done = aesni_gcm_decrypt_bswap(datap, datap, bleft,
+ 		    (const void *)key, ctx->gcm_cb, ghash);
+ 		if (done == 0) {
+ 			clear_fpu_regs();
+diff --git a/module/icp/asm-x86_64/modes/aesni-gcm-x86_64.S b/module/icp/asm-x86_64/modes/aesni-gcm-x86_64.inc.S
+similarity index 92%
+rename from module/icp/asm-x86_64/modes/aesni-gcm-x86_64.S
+rename to module/icp/asm-x86_64/modes/aesni-gcm-x86_64.inc.S
+index bad0b7d23..af2a5adf6 100644
+--- a/module/icp/asm-x86_64/modes/aesni-gcm-x86_64.S
++++ b/module/icp/asm-x86_64/modes/aesni-gcm-x86_64.inc.S
+@@ -44,9 +44,6 @@
+ # and modified for ICP. Modification are kept at a bare minimum to ease later
+ # upstream merges.
+ 
+-#if defined(__x86_64__) && defined(HAVE_AVX) && \
+-    defined(HAVE_AES) && defined(HAVE_PCLMULQDQ) && defined(HAVE_MOVBE)
+-
+ .text
+ 
+ .type	_aesni_ctr32_ghash_6x,@function
+@@ -112,9 +109,11 @@ _aesni_ctr32_ghash_6x:
+ 	vpclmulqdq	$0x11,%xmm3,%xmm0,%xmm3
+ 	vmovdqu	64+8(%rsp),%xmm0
+ 	vaesenc	%xmm15,%xmm10,%xmm10
+-	movbeq	88(%r14),%r13
++	MOVQ_AND_BYTESWAP_PART1(88(%r14),%r13)
++	MOVQ_AND_BYTESWAP_PART2(88(%r14),%r13)
+ 	vaesenc	%xmm15,%xmm11,%xmm11
+-	movbeq	80(%r14),%r12
++	MOVQ_AND_BYTESWAP_PART1(80(%r14),%r12)
++	MOVQ_AND_BYTESWAP_PART2(80(%r14),%r12)
+ 	vaesenc	%xmm15,%xmm12,%xmm12
+ 	movq	%r13,32+8(%rsp)
+ 	vaesenc	%xmm15,%xmm13,%xmm13
+@@ -147,11 +146,13 @@ _aesni_ctr32_ghash_6x:
+ 	vpxor	%xmm3,%xmm6,%xmm6
+ 	vpclmulqdq	$0x10,%xmm1,%xmm0,%xmm3
+ 	vaesenc	%xmm15,%xmm10,%xmm10
+-	movbeq	72(%r14),%r13
++	MOVQ_AND_BYTESWAP_PART1(72(%r14),%r13)
++	MOVQ_AND_BYTESWAP_PART2(72(%r14),%r13)
+ 	vpxor	%xmm5,%xmm7,%xmm7
+ 	vpclmulqdq	$0x01,%xmm1,%xmm0,%xmm5
+ 	vaesenc	%xmm15,%xmm11,%xmm11
+-	movbeq	64(%r14),%r12
++	MOVQ_AND_BYTESWAP_PART1(64(%r14),%r12)
++	MOVQ_AND_BYTESWAP_PART2(64(%r14),%r12)
+ 	vpclmulqdq	$0x11,%xmm1,%xmm0,%xmm1
+ 	vmovdqu	96+8(%rsp),%xmm0
+ 	vaesenc	%xmm15,%xmm12,%xmm12
+@@ -169,12 +170,14 @@ _aesni_ctr32_ghash_6x:
+ 	vpxor	%xmm5,%xmm6,%xmm6
+ 	vpclmulqdq	$0x10,%xmm2,%xmm0,%xmm5
+ 	vaesenc	%xmm15,%xmm10,%xmm10
+-	movbeq	56(%r14),%r13
++	MOVQ_AND_BYTESWAP_PART1(56(%r14),%r13)
++	MOVQ_AND_BYTESWAP_PART2(56(%r14),%r13)
+ 	vpxor	%xmm1,%xmm7,%xmm7
+ 	vpclmulqdq	$0x01,%xmm2,%xmm0,%xmm1
+ 	vpxor	112+8(%rsp),%xmm8,%xmm8
+ 	vaesenc	%xmm15,%xmm11,%xmm11
+-	movbeq	48(%r14),%r12
++	MOVQ_AND_BYTESWAP_PART1(48(%r14),%r12)
++	MOVQ_AND_BYTESWAP_PART2(48(%r14),%r12)
+ 	vpclmulqdq	$0x11,%xmm2,%xmm0,%xmm2
+ 	vaesenc	%xmm15,%xmm12,%xmm12
+ 	movq	%r13,64+8(%rsp)
+@@ -191,11 +194,13 @@ _aesni_ctr32_ghash_6x:
+ 	vpxor	%xmm1,%xmm6,%xmm6
+ 	vpclmulqdq	$0x01,%xmm3,%xmm8,%xmm1
+ 	vaesenc	%xmm15,%xmm10,%xmm10
+-	movbeq	40(%r14),%r13
++	MOVQ_AND_BYTESWAP_PART1(40(%r14),%r13)
++	MOVQ_AND_BYTESWAP_PART2(40(%r14),%r13)
+ 	vpxor	%xmm2,%xmm7,%xmm7
+ 	vpclmulqdq	$0x00,%xmm3,%xmm8,%xmm2
+ 	vaesenc	%xmm15,%xmm11,%xmm11
+-	movbeq	32(%r14),%r12
++	MOVQ_AND_BYTESWAP_PART1(32(%r14),%r12)
++	MOVQ_AND_BYTESWAP_PART2(32(%r14),%r12)
+ 	vpclmulqdq	$0x11,%xmm3,%xmm8,%xmm8
+ 	vaesenc	%xmm15,%xmm12,%xmm12
+ 	movq	%r13,80+8(%rsp)
+@@ -214,9 +219,11 @@ _aesni_ctr32_ghash_6x:
+ 	vpxor	%xmm8,%xmm7,%xmm7
+ 	vaesenc	%xmm15,%xmm10,%xmm10
+ 	vpxor	%xmm5,%xmm4,%xmm4
+-	movbeq	24(%r14),%r13
++	MOVQ_AND_BYTESWAP_PART1(24(%r14),%r13)
++	MOVQ_AND_BYTESWAP_PART2(24(%r14),%r13)
+ 	vaesenc	%xmm15,%xmm11,%xmm11
+-	movbeq	16(%r14),%r12
++	MOVQ_AND_BYTESWAP_PART1(16(%r14),%r12)
++	MOVQ_AND_BYTESWAP_PART2(16(%r14),%r12)
+ 	vpalignr	$8,%xmm4,%xmm4,%xmm0
+ 	vpclmulqdq	$0x10,%xmm3,%xmm4,%xmm4
+ 	movq	%r13,96+8(%rsp)
+@@ -234,9 +241,11 @@ _aesni_ctr32_ghash_6x:
+ 	vpxor	%xmm6,%xmm7,%xmm7
+ 	vaesenc	%xmm1,%xmm12,%xmm12
+ 	vpxor	%xmm0,%xmm4,%xmm4
+-	movbeq	8(%r14),%r13
++	MOVQ_AND_BYTESWAP_PART1(8(%r14),%r13)
++	MOVQ_AND_BYTESWAP_PART2(8(%r14),%r13)
+ 	vaesenc	%xmm1,%xmm13,%xmm13
+-	movbeq	0(%r14),%r12
++	MOVQ_AND_BYTESWAP_PART1(0(%r14),%r12)
++	MOVQ_AND_BYTESWAP_PART2(0(%r14),%r12)
+ 	vaesenc	%xmm1,%xmm14,%xmm14
+ 	vmovups	160-128(%rcx),%xmm1
+ 	cmpl	$12,%ebp	// ICP uses 10,12,14 not 9,11,13 for rounds.
+@@ -361,10 +370,10 @@ _aesni_ctr32_ghash_6x:
+ 
+ 	.byte	0xf3,0xc3
+ .size	_aesni_ctr32_ghash_6x,.-_aesni_ctr32_ghash_6x
+-.globl	aesni_gcm_decrypt
+-.type	aesni_gcm_decrypt,@function
++.globl	ZFS_ENTRY_SYMBOL_RENAME(aesni_gcm_decrypt)
++.type	ZFS_ENTRY_SYMBOL_RENAME(aesni_gcm_decrypt),@function
+ .align	32
+-aesni_gcm_decrypt:
++ZFS_ENTRY_SYMBOL_RENAME(aesni_gcm_decrypt):
+ .cfi_startproc
+ 	xorq	%r10,%r10
+ 	cmpq	$0x60,%rdx
+@@ -462,7 +471,7 @@ aesni_gcm_decrypt:
+ 	movq	%r10,%rax
+ 	.byte	0xf3,0xc3
+ .cfi_endproc
+-.size	aesni_gcm_decrypt,.-aesni_gcm_decrypt
++.size	ZFS_ENTRY_SYMBOL_RENAME(aesni_gcm_decrypt),.-ZFS_ENTRY_SYMBOL_RENAME(aesni_gcm_decrypt)
+ .type	_aesni_ctr32_6x,@function
+ .align	32
+ _aesni_ctr32_6x:
+@@ -554,10 +563,10 @@ _aesni_ctr32_6x:
+ 	jmp	.Loop_ctr32
+ .size	_aesni_ctr32_6x,.-_aesni_ctr32_6x
+ 
+-.globl	aesni_gcm_encrypt
+-.type	aesni_gcm_encrypt,@function
++.globl	ZFS_ENTRY_SYMBOL_RENAME(aesni_gcm_encrypt)
++.type	ZFS_ENTRY_SYMBOL_RENAME(aesni_gcm_encrypt),@function
+ .align	32
+-aesni_gcm_encrypt:
++ZFS_ENTRY_SYMBOL_RENAME(aesni_gcm_encrypt):
+ .cfi_startproc
+ 	xorq	%r10,%r10
+ 	cmpq	$288,%rdx
+@@ -819,56 +828,7 @@ aesni_gcm_encrypt:
+ 	movq	%r10,%rax
+ 	.byte	0xf3,0xc3
+ .cfi_endproc
+-.size	aesni_gcm_encrypt,.-aesni_gcm_encrypt
+-
+-/* Some utility routines */
+-
+-/*
+- * clear all fpu registers
+- * void clear_fpu_regs_avx(void);
+- */
+-.globl	clear_fpu_regs_avx
+-.type	clear_fpu_regs_avx,@function
+-.align	32
+-clear_fpu_regs_avx:
+-	vzeroall
+-	ret
+-.size	clear_fpu_regs_avx,.-clear_fpu_regs_avx
+-
+-/*
+- * void gcm_xor_avx(const uint8_t *src, uint8_t *dst);
+- *
+- * XORs one pair of unaligned 128-bit blocks from `src' and `dst' and
+- * stores the result at `dst'. The XOR is performed using FPU registers,
+- * so make sure FPU state is saved when running this in the kernel.
+- */
+-.globl  gcm_xor_avx
+-.type	gcm_xor_avx,@function
+-.align	32
+-gcm_xor_avx:
+-	movdqu  (%rdi), %xmm0
+-	movdqu  (%rsi), %xmm1
+-	pxor    %xmm1, %xmm0
+-	movdqu  %xmm0, (%rsi)
+-	ret
+-.size	gcm_xor_avx,.-gcm_xor_avx
+-
+-/*
+- * Toggle a boolean_t value atomically and return the new value.
+- * boolean_t atomic_toggle_boolean_nv(volatile boolean_t *);
+- */
+-.globl	atomic_toggle_boolean_nv
+-.type	atomic_toggle_boolean_nv,@function
+-.align	32
+-atomic_toggle_boolean_nv:
+-	xorl	%eax, %eax
+-	lock
+-	xorl	$1, (%rdi)
+-	jz	1f
+-	movl	$1, %eax
+-1:
+-	ret
+-.size	atomic_toggle_boolean_nv,.-atomic_toggle_boolean_nv
++.size	ZFS_ENTRY_SYMBOL_RENAME(aesni_gcm_encrypt),.-ZFS_ENTRY_SYMBOL_RENAME(aesni_gcm_encrypt)
+ 
+ .align	64
+ .Lbswap_mask:
+@@ -887,6 +847,4 @@ atomic_toggle_boolean_nv:
+ /* Mark the stack non-executable. */
+ #if defined(__linux__) && defined(__ELF__)
+ .section .note.GNU-stack,"",%progbits
+-#endif
+-
+-#endif /* defined(__x86_64__) && defined(HAVE_AVX) && defined(HAVE_AES) ... */
++#endif /* defined(__linux__) && defined(__ELF__) */
+diff --git a/module/icp/asm-x86_64/modes/aesni-gcm-x86_64_bswap.S b/module/icp/asm-x86_64/modes/aesni-gcm-x86_64_bswap.S
+new file mode 100644
+index 000000000..1d251ea2a
+--- /dev/null
++++ b/module/icp/asm-x86_64/modes/aesni-gcm-x86_64_bswap.S
+@@ -0,0 +1,110 @@
++# Copyright 2013-2016 The OpenSSL Project Authors. All Rights Reserved.
++#
++# Licensed under the Apache License 2.0 (the "License").  You may not use
++# this file except in compliance with the License.  You can obtain a copy
++# in the file LICENSE in the source distribution or at
++# https://www.openssl.org/source/license.html
++
++#
++# ====================================================================
++# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
++# project. The module is, however, dual licensed under OpenSSL and
++# CRYPTOGAMS licenses depending on where you obtain it. For further
++# details see http://www.openssl.org/~appro/cryptogams/.
++# ====================================================================
++#
++#
++# AES-NI-CTR+GHASH stitch.
++#
++# February 2013
++#
++# OpenSSL GCM implementation is organized in such way that its
++# performance is rather close to the sum of its streamed components,
++# in the context parallelized AES-NI CTR and modulo-scheduled
++# PCLMULQDQ-enabled GHASH. Unfortunately, as no stitch implementation
++# was observed to perform significantly better than the sum of the
++# components on contemporary CPUs, the effort was deemed impossible to
++# justify. This module is based on combination of Intel submissions,
++# [1] and [2], with MOVBE twist suggested by Ilya Albrekht and Max
++# Locktyukhin of Intel Corp. who verified that it reduces shuffles
++# pressure with notable relative improvement, achieving 1.0 cycle per
++# byte processed with 128-bit key on Haswell processor, 0.74 - on
++# Broadwell, 0.63 - on Skylake... [Mentioned results are raw profiled
++# measurements for favourable packet size, one divisible by 96.
++# Applications using the EVP interface will observe a few percent
++# worse performance.]
++#
++# Knights Landing processes 1 byte in 1.25 cycles (measured with EVP).
++#
++# [1] http://rt.openssl.org/Ticket/Display.html?id=2900&user=guest&pass=guest
++# [2] http://www.intel.com/content/dam/www/public/us/en/documents/software-support/enabling-high-performance-gcm.pdf
++
++# Generated once from
++# https://github.com/openssl/openssl/blob/5ffc3324/crypto/modes/asm/aesni-gcm-x86_64.pl
++# and modified for ICP. Modification are kept at a bare minimum to ease later
++# upstream merges.
++
++/* aes-without-movbe (bswap) x86_64 GCM implementation
++   and shared global utility functions */
++
++#if defined(__x86_64__) && defined(HAVE_AVX) && \
++    defined(HAVE_AES) && defined(HAVE_PCLMULQDQ)
++
++/* Some utility routines */
++
++/*
++ * clear all fpu registers
++ * void clear_fpu_regs_avx(void);
++ */
++.globl	clear_fpu_regs_avx
++.type	clear_fpu_regs_avx,@function
++.align	32
++clear_fpu_regs_avx:
++	vzeroall
++	ret
++.size	clear_fpu_regs_avx,.-clear_fpu_regs_avx
++
++/*
++ * void gcm_xor_avx(const uint8_t *src, uint8_t *dst);
++ *
++ * XORs one pair of unaligned 128-bit blocks from `src' and `dst' and
++ * stores the result at `dst'. The XOR is performed using FPU registers,
++ * so make sure FPU state is saved when running this in the kernel.
++ */
++.globl  gcm_xor_avx
++.type	gcm_xor_avx,@function
++.align	32
++gcm_xor_avx:
++	movdqu  (%rdi), %xmm0
++	movdqu  (%rsi), %xmm1
++	pxor    %xmm1, %xmm0
++	movdqu  %xmm0, (%rsi)
++	ret
++.size	gcm_xor_avx,.-gcm_xor_avx
++
++/*
++ * Toggle a boolean_t value atomically and return the new value.
++ * boolean_t atomic_toggle_boolean_nv(volatile boolean_t *);
++ */
++.globl	atomic_toggle_boolean_nv
++.type	atomic_toggle_boolean_nv,@function
++.align	32
++atomic_toggle_boolean_nv:
++	xorl	%eax, %eax
++	lock
++	xorl	$1, (%rdi)
++	jz	1f
++	movl	$1, %eax
++1:
++	ret
++.size	atomic_toggle_boolean_nv,.-atomic_toggle_boolean_nv
++
++/* defined in two parts because it NEEDS to expand into two separate lines */
++# define MOVQ_AND_BYTESWAP_PART1(SRC,DEST) \
++    movq SRC,DEST
++# define MOVQ_AND_BYTESWAP_PART2(SRC,DEST) \
++    bswapq DEST
++# define ZFS_ENTRY_SYMBOL_RENAME(NAME) NAME##_bswap
++# include "aesni-gcm-x86_64.inc.S"
++
++#endif /* defined(__x86_64__) ... */
+diff --git a/module/icp/asm-x86_64/modes/aesni-gcm-x86_64_movbe.S b/module/icp/asm-x86_64/modes/aesni-gcm-x86_64_movbe.S
+new file mode 100644
+index 000000000..dff2113cb
+--- /dev/null
++++ b/module/icp/asm-x86_64/modes/aesni-gcm-x86_64_movbe.S
+@@ -0,0 +1,15 @@
++/* aes-with-movbe x86_64 GCM implementation */
++
++#if defined(__x86_64__) && defined(HAVE_AVX) && \
++    defined(HAVE_AES) && defined(HAVE_PCLMULQDQ) && \
++    defined(HAVE_MOVBE)
++    
++/* defined in two parts because it NEEDS to expand into two separate lines */
++# define MOVQ_AND_BYTESWAP_PART1(SRC,DEST) \
++    movbeq SRC,DEST
++# define MOVQ_AND_BYTESWAP_PART2(SRC,DEST) \
++    /* byte-swap is part of movbeq already */
++# define ZFS_ENTRY_SYMBOL_RENAME(NAME) NAME##_movbe
++# include "aesni-gcm-x86_64.inc.S"
++
++#endif /* defined(__x86_64__) ... */
+diff --git a/module/icp/include/modes/modes.h b/module/icp/include/modes/modes.h
+index 9396eab5c..130c05aab 100644
+--- a/module/icp/include/modes/modes.h
++++ b/module/icp/include/modes/modes.h
+@@ -40,7 +40,7 @@ extern "C" {
+  * anyhow.
+  */
+ #if defined(__x86_64__) && defined(HAVE_AVX) && \
+-    defined(HAVE_AES) && defined(HAVE_PCLMULQDQ) && defined(HAVE_MOVBE)
++    defined(HAVE_AES) && defined(HAVE_PCLMULQDQ)
+ #define	CAN_USE_GCM_ASM
+ #endif
+ 
+-- 
+2.22.0.windows.1
+

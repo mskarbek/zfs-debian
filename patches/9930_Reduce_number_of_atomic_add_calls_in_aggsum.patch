@@ -1,0 +1,136 @@
+From 10ef48c17d154a185c5d43a3ad891989ddd6f8b9 Mon Sep 17 00:00:00 2001
+From: Alexander Motin <mav@FreeBSD.org>
+Date: Sun, 2 Feb 2020 12:50:18 -0500
+Subject: [PATCH] Reduce number of atomic_add() calls in aggsum.
+
+Previous code used 4 atomics to do aggsum_flush_bucket() and 2 more to
+re-borrow after the flush.  But since asc_borrowed and asc_delta are
+accessed only while holding asc_lock, it makes no any sense to modify
+as_lower_bound and as_upper_bound in multiple steps.  Instead of that
+the new code uses only 2 atomics in all the cases, one per as_*_bound
+variable.  I think even that is overkill, simple atomic store and
+load could be used here, since all modifications are done under the
+as_lock, but there are no such primitives in ZFS code now.
+
+While there, make borrow code consider previous borrow value, so that
+on mixed request patterns reduce chance of needing to borrow again if
+much larger request follows tiny one that needed borrow.
+
+Also reduce as_numbuckets from uint64_t to u_int.  It makes no sense
+to use so large division operation on every aggsum_add().
+
+Signed-off-by: Alexander Motin <mav@FreeBSD.org>
+Sponsored-By: iXsystems, Inc.
+---
+ include/sys/aggsum.h |  2 +-
+ module/zfs/aggsum.c  | 65 ++++++++++++++++++++++----------------------
+ 2 files changed, 34 insertions(+), 33 deletions(-)
+
+diff --git a/include/sys/aggsum.h b/include/sys/aggsum.h
+index caa08d7738c..cb43727f1df 100644
+--- a/include/sys/aggsum.h
++++ b/include/sys/aggsum.h
+@@ -40,7 +40,7 @@ typedef struct aggsum {
+ 	kmutex_t as_lock;
+ 	int64_t as_lower_bound;
+ 	int64_t as_upper_bound;
+-	uint64_t as_numbuckets;
++	uint_t as_numbuckets;
+ 	aggsum_bucket_t *as_buckets;
+ } aggsum_t;
+ 
+diff --git a/module/zfs/aggsum.c b/module/zfs/aggsum.c
+index ace3a83a5d8..a2fec27744e 100644
+--- a/module/zfs/aggsum.c
++++ b/module/zfs/aggsum.c
+@@ -125,13 +125,11 @@ aggsum_flush_bucket(aggsum_t *as, struct aggsum_bucket *asb)
+ 	 * We use atomic instructions for this because we read the upper and
+ 	 * lower bounds without the lock, so we need stores to be atomic.
+ 	 */
+-	atomic_add_64((volatile uint64_t *)&as->as_lower_bound, asb->asc_delta);
+-	atomic_add_64((volatile uint64_t *)&as->as_upper_bound, asb->asc_delta);
+-	asb->asc_delta = 0;
+-	atomic_add_64((volatile uint64_t *)&as->as_upper_bound,
+-	    -asb->asc_borrowed);
+ 	atomic_add_64((volatile uint64_t *)&as->as_lower_bound,
+-	    asb->asc_borrowed);
++	    asb->asc_delta + asb->asc_borrowed);
++	atomic_add_64((volatile uint64_t *)&as->as_upper_bound,
++	    asb->asc_delta - asb->asc_borrowed);
++	asb->asc_delta = 0;
+ 	asb->asc_borrowed = 0;
+ }
+ 
+@@ -163,43 +161,46 @@ aggsum_value(aggsum_t *as)
+ 	return (rv);
+ }
+ 
+-static void
+-aggsum_borrow(aggsum_t *as, int64_t delta, struct aggsum_bucket *asb)
+-{
+-	int64_t abs_delta = (delta < 0 ? -delta : delta);
+-	mutex_enter(&as->as_lock);
+-	mutex_enter(&asb->asc_lock);
+-
+-	aggsum_flush_bucket(as, asb);
+-
+-	atomic_add_64((volatile uint64_t *)&as->as_upper_bound, abs_delta);
+-	atomic_add_64((volatile uint64_t *)&as->as_lower_bound, -abs_delta);
+-	asb->asc_borrowed = abs_delta;
+-
+-	mutex_exit(&asb->asc_lock);
+-	mutex_exit(&as->as_lock);
+-}
+-
+ void
+ aggsum_add(aggsum_t *as, int64_t delta)
+ {
+ 	struct aggsum_bucket *asb;
++	int64_t borrow;
+ 
+ 	kpreempt_disable();
+ 	asb = &as->as_buckets[CPU_SEQID % as->as_numbuckets];
+ 	kpreempt_enable();
+ 
+-	for (;;) {
+-		mutex_enter(&asb->asc_lock);
+-		if (asb->asc_delta + delta <= (int64_t)asb->asc_borrowed &&
+-		    asb->asc_delta + delta >= -(int64_t)asb->asc_borrowed) {
+-			asb->asc_delta += delta;
+-			mutex_exit(&asb->asc_lock);
+-			return;
+-		}
++	/* Try fast path if we already borrowed enough before. */
++	mutex_enter(&asb->asc_lock);
++	if (asb->asc_delta + delta <= (int64_t)asb->asc_borrowed &&
++	    asb->asc_delta + delta >= -(int64_t)asb->asc_borrowed) {
++		asb->asc_delta += delta;
+ 		mutex_exit(&asb->asc_lock);
+-		aggsum_borrow(as, delta * aggsum_borrow_multiplier, asb);
++		return;
+ 	}
++	mutex_exit(&asb->asc_lock);
++
++	/*
++	 * We haven't borrowed enough.  Take the global lock and borrow
++	 * considering what is requested now and what we borrowed before.
++	 */
++	borrow = (delta < 0 ? -delta : delta) * aggsum_borrow_multiplier;
++	mutex_enter(&as->as_lock);
++	mutex_enter(&asb->asc_lock);
++	delta += asb->asc_delta;
++	asb->asc_delta = 0;
++	if (borrow >= asb->asc_borrowed)
++		borrow -= asb->asc_borrowed;
++	else
++		borrow = (borrow - (int64_t)asb->asc_borrowed) / 4;
++	asb->asc_borrowed += borrow;
++	atomic_add_64((volatile uint64_t *)&as->as_lower_bound,
++	    delta - borrow);
++	atomic_add_64((volatile uint64_t *)&as->as_upper_bound,
++	    delta + borrow);
++	mutex_exit(&asb->asc_lock);
++	mutex_exit(&as->as_lock);
+ }
+ 
+ /*

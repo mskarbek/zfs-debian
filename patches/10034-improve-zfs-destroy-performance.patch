@@ -1,0 +1,164 @@
+From 34f07d6cf47704fcca11d99b60acd75084a5bfb7 Mon Sep 17 00:00:00 2001
+From: Matthew Ahrens <mahrens@delphix.com>
+Date: Thu, 13 Feb 2020 09:18:09 -0800
+Subject: [PATCH] Improve zfs destroy performance with zio_t-free zio_free()
+
+When "zfs destroy" is run, it completes quickly, and in the background
+we locate the blocks to free and free them.  This background activity
+can be observed with `zpool get freeing` and `zpool wait -t free ...`.
+
+This background activity is processed by a single thread (the spa_sync
+thread) which calls zio_free() on each of the blocks to free.  With even
+modest storage performance, the CPU consumption of zio_free() can be the
+performance bottleneck.
+
+Performance of zio_free() can be improved by not actually creating a
+zio_t in the common case (non-dedup, non-gang), instead calling
+metaslab_free() directly.  This avoids the CPU cost of allocating the
+zio_t, and more importantly the cost of adding and later removing this
+zio_t from the parent zio's child list.
+
+The result is that performance of background freeing more than doubles,
+from 0.6 million blocks per second to 1.3 million blocks per second.
+
+Signed-off-by: Matthew Ahrens <mahrens@delphix.com>
+---
+ module/zfs/dsl_scan.c | 10 ++++++---
+ module/zfs/spa.c      |  8 +++++---
+ module/zfs/zio.c      | 48 ++++++++++++++++++++++++++-----------------
+ 3 files changed, 41 insertions(+), 25 deletions(-)
+
+diff --git a/module/zfs/dsl_scan.c b/module/zfs/dsl_scan.c
+index 3579f71d7..afb2fa337 100644
+--- a/module/zfs/dsl_scan.c
++++ b/module/zfs/dsl_scan.c
+@@ -1072,7 +1072,9 @@ void
+ dsl_free_sync(zio_t *pio, dsl_pool_t *dp, uint64_t txg, const blkptr_t *bpp)
+ {
+ 	ASSERT(dsl_pool_sync_context(dp));
+-	zio_nowait(zio_free_sync(pio, dp->dp_spa, txg, bpp, pio->io_flags));
++	zio_t *zio = zio_free_sync(pio, dp->dp_spa, txg, bpp, pio->io_flags);
++	if (zio != NULL)
++		zio_nowait(zio);
+ }
+ 
+ static int
+@@ -3126,8 +3128,10 @@ dsl_scan_free_block_cb(void *arg, const blkptr_t *bp, dmu_tx_t *tx)
+ 			return (SET_ERROR(ERESTART));
+ 	}
+ 
+-	zio_nowait(zio_free_sync(scn->scn_zio_root, scn->scn_dp->dp_spa,
+-	    dmu_tx_get_txg(tx), bp, 0));
++	zio_t *zio = zio_free_sync(scn->scn_zio_root, scn->scn_dp->dp_spa,
++	    dmu_tx_get_txg(tx), bp, 0);
++	if (zio != NULL)
++		zio_nowait(zio);
+ 	dsl_dir_diduse_space(tx->tx_pool->dp_free_dir, DD_USED_HEAD,
+ 	    -bp_get_dsize_sync(scn->scn_dp->dp_spa, bp),
+ 	    -BP_GET_PSIZE(bp), -BP_GET_UCSIZE(bp), tx);
+diff --git a/module/zfs/spa.c b/module/zfs/spa.c
+index c12b20270..7c4571907 100644
+--- a/module/zfs/spa.c
++++ b/module/zfs/spa.c
+@@ -8125,10 +8125,12 @@ bpobj_enqueue_free_cb(void *arg, const blkptr_t *bp, dmu_tx_t *tx)
+ static int
+ spa_free_sync_cb(void *arg, const blkptr_t *bp, dmu_tx_t *tx)
+ {
+-	zio_t *zio = arg;
++	zio_t *pio = arg;
+ 
+-	zio_nowait(zio_free_sync(zio, zio->io_spa, dmu_tx_get_txg(tx), bp,
+-	    zio->io_flags));
++	zio_t *zio = zio_free_sync(pio, pio->io_spa, dmu_tx_get_txg(tx), bp,
++	    pio->io_flags);
++	if (zio != NULL)
++		zio_nowait(zio);
+ 	return (0);
+ }
+ 
+diff --git a/module/zfs/zio.c b/module/zfs/zio.c
+index 9dc3c830a..bc4809f21 100644
+--- a/module/zfs/zio.c
++++ b/module/zfs/zio.c
+@@ -1194,40 +1194,46 @@ zio_free(spa_t *spa, uint64_t txg, const blkptr_t *bp)
+ 	    !spa_feature_is_active(spa, SPA_FEATURE_LOG_SPACEMAP))) {
+ 		bplist_append(&spa->spa_free_bplist[txg & TXG_MASK], bp);
+ 	} else {
+-		VERIFY0(zio_wait(zio_free_sync(NULL, spa, txg, bp, 0)));
++		VERIFY3P(zio_free_sync(NULL, spa, txg, bp, 0), ==, NULL);
+ 	}
+ }
+ 
++/*
++ * To improve performance, this function may return NULL if we were able
++ * to do the free immediately.  This avoids the cost of creating a zio
++ * (and linking it to the parent, etc).
++ */
+ zio_t *
+ zio_free_sync(zio_t *pio, spa_t *spa, uint64_t txg, const blkptr_t *bp,
+     enum zio_flag flags)
+ {
+-	zio_t *zio;
+-	enum zio_stage stage = ZIO_FREE_PIPELINE;
+-
+ 	ASSERT(!BP_IS_HOLE(bp));
+ 	ASSERT(spa_syncing_txg(spa) == txg);
+ 
+ 	if (BP_IS_EMBEDDED(bp))
+-		return (zio_null(pio, spa, NULL, NULL, NULL, 0));
++		return (NULL);
+ 
+ 	metaslab_check_free(spa, bp);
+ 	arc_freed(spa, bp);
+ 	dsl_scan_freed(spa, bp);
+ 
+-	/*
+-	 * GANG and DEDUP blocks can induce a read (for the gang block header,
+-	 * or the DDT), so issue them asynchronously so that this thread is
+-	 * not tied up.
+-	 */
+-	if (BP_IS_GANG(bp) || BP_GET_DEDUP(bp))
+-		stage |= ZIO_STAGE_ISSUE_ASYNC;
+-
+-	zio = zio_create(pio, spa, txg, bp, NULL, BP_GET_PSIZE(bp),
+-	    BP_GET_PSIZE(bp), NULL, NULL, ZIO_TYPE_FREE, ZIO_PRIORITY_NOW,
+-	    flags, NULL, 0, NULL, ZIO_STAGE_OPEN, stage);
++	if (BP_IS_GANG(bp) || BP_GET_DEDUP(bp)) {
++		/*
++		 * GANG and DEDUP blocks can induce a read (for the gang block
++		 * header, or the DDT), so issue them asynchronously so that
++		 * this thread is not tied up.
++		 */
++		enum zio_stage stage =
++		    ZIO_FREE_PIPELINE | ZIO_STAGE_ISSUE_ASYNC;
+ 
+-	return (zio);
++		return (zio_create(pio, spa, txg, bp, NULL, BP_GET_PSIZE(bp),
++		    BP_GET_PSIZE(bp), NULL, NULL,
++		    ZIO_TYPE_FREE, ZIO_PRIORITY_NOW,
++		    flags, NULL, 0, NULL, ZIO_STAGE_OPEN, stage));
++	} else {
++		metaslab_free(spa, bp, txg, B_FALSE);
++		return (NULL);
++	}
+ }
+ 
+ zio_t *
+@@ -2489,8 +2495,12 @@ static zio_t *
+ zio_free_gang(zio_t *pio, blkptr_t *bp, zio_gang_node_t *gn, abd_t *data,
+     uint64_t offset)
+ {
+-	return (zio_free_sync(pio, pio->io_spa, pio->io_txg, bp,
+-	    ZIO_GANG_CHILD_FLAGS(pio)));
++	zio_t *zio = zio_free_sync(pio, pio->io_spa, pio->io_txg, bp,
++	    ZIO_GANG_CHILD_FLAGS(pio));
++	if (zio == NULL)
++		zio = zio_null(pio, pio->io_spa,
++		    NULL, NULL, NULL, ZIO_GANG_CHILD_FLAGS(pio));
++	return (zio);
+ }
+ 
+ /* ARGSUSED */
+-- 
+2.17.1
+

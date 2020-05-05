@@ -1,0 +1,32 @@
+From 1eb1f33c6914e6419d4f4699bf45dfe8e288eeb7 Mon Sep 17 00:00:00 2001
+From: Matthew Ahrens <mahrens@delphix.com>
+Date: Mon, 6 Apr 2020 08:01:45 -0700
+Subject: [PATCH] zvol_write() can use dmu_tx_hold_write_by_dnode()
+
+We can improve the performance of writes to zvols by using
+dmu_tx_hold_write_by_dnode() instead of dmu_tx_hold_write().  This
+reduces lock contention on the first block of the dnode object, and also
+reduces the amount of CPU needed.  The benefit will be highest with
+multi-threaded async writes (i.e. writes that don't call zil_commit()).
+
+Signed-off-by: Matthew Ahrens <mahrens@delphix.com>
+---
+ module/os/linux/zfs/zvol_os.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/module/os/linux/zfs/zvol_os.c b/module/os/linux/zfs/zvol_os.c
+index ce719734c..f176b186c 100644
+--- a/module/os/linux/zfs/zvol_os.c
++++ b/module/os/linux/zfs/zvol_os.c
+@@ -125,7 +125,7 @@ zvol_write(void *arg)
+ 		if (bytes > volsize - off)	/* don't write past the end */
+ 			bytes = volsize - off;
+ 
+-		dmu_tx_hold_write(tx, ZVOL_OBJ, off, bytes);
++		dmu_tx_hold_write_by_dnode(tx, zv->zv_dn, off, bytes);
+ 
+ 		/* This will only fail for ENOSPC */
+ 		error = dmu_tx_assign(tx, TXG_WAIT);
+-- 
+2.24.0.windows.2
+
