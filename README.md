@@ -35,7 +35,7 @@ sudo bash -c "echo \"zfs-dkms zfs-dkms/note-incompatible-licenses note true\" | 
 sudo apt install -t zfs-debian-experimental --yes zfs-dkms zfsutils-linux  
 ````
 # List of tests skipped at Github runners
-Please note, that scsi_debug kernel module is not present in Ubuntu 18.4 version [used within Github runners](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/software-installed-on-github-hosted-runners#ubuntu-1804-lts), hence all tests, relying on it will be skipped. I've added patch, adding these tests to known to skip list, see it [here](./patches/terem-0002-added-known-to-skip-tests-on-github-workflow-vm.patch). Check it for complete list of these tests. If you want to use self-hosted runners, do not forget to exclude this patch from ./patches/series file to have complete test coverage.
+I've added patch, adding several tests to the "known to skip or fail" list, see it [here](./patches/terem-0002-added-known-to-skip-tests-on-github-workflow-vm.patch). Check it for complete list of these tests. If you want to use self-hosted runners, do not forget to exclude this patch from ./patches/series file to have complete test coverage.
 
 # Forking the repo
 Fork and setup this repo for personal ZFS packages tailored to your needs in 5 easy steps:
