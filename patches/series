@@ -39,6 +39,7 @@ terem-0001-zed-service-start-stop-fix-for-tests-conducted-using.patch
 terem-0002-added-known-to-skip-tests-on-github-workflow-vm.patch
 terem-0003-unlock-zfs-root-over-ssh.patch
 terem-0004-add-ZSTD-compression.patch
+terem-0005-update-zfsunlock-for-PR-openzfs-zfs-10027.patch
 
 #10029-ICP-gcm-avx-Support-architectures-lacking-the-MOVBE.patch
 #10034-improve-zfs-destroy-performance.patch
