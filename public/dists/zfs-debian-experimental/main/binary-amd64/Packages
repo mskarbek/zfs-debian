@@ -1,0 +1,425 @@
+Package: libnvpair1linux
+Priority: optional
+Section: contrib/libs
+Installed-Size: 162
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Original-Maintainer: Debian ZFS on Linux maintainers <pkg-zfsonlinux-devel@alioth-lists.debian.net>
+Architecture: amd64
+Source: zfs-linux
+Version: 0.8.4-1terem4
+Replaces: libnvpair1
+Depends: libc6 (>= 2.4)
+Breaks: libnvpair1
+Filename: pool/main/z/zfs-linux/libnvpair1linux_0.8.4-1terem4_amd64.deb
+Size: 54892
+MD5sum: 752049454e2fe3e32debeddb288db134
+SHA1: b21855400567949e325d7205ba70336775ee795e
+SHA256: 1b209e4c87d10c5da39045c5f8ba06410e245b335b926f922d27392910d0bd94
+SHA512: f1d10779f8b8c1ac5d130dac45fc1dc3c4d5ae2cf666f26c021c9d494deac6dd648cd8203ee8f117452c58f8d4d32954b7ac8e2a7f0123f300503c7edf386917
+Description: Solaris name-value library for Linux
+ This library provides routines for packing and unpacking nv pairs for
+ transporting data across process boundaries, transporting between
+ kernel and userland, and possibly saving onto disk files.
+Homepage: https://zfsonlinux.org/
+
+Package: libuutil1linux
+Priority: optional
+Section: contrib/libs
+Installed-Size: 131
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Original-Maintainer: Debian ZFS on Linux maintainers <pkg-zfsonlinux-devel@alioth-lists.debian.net>
+Architecture: amd64
+Source: zfs-linux
+Version: 0.8.4-1terem4
+Replaces: libuutil1
+Depends: libc6 (>= 2.14)
+Breaks: libuutil1
+Filename: pool/main/z/zfs-linux/libuutil1linux_0.8.4-1terem4_amd64.deb
+Size: 48440
+MD5sum: d18f1362a3f2d6d4abe6520247aa5152
+SHA1: 74b03ae4b496782ebfe123731d696538b7f72a04
+SHA256: 28056f5f55c00dc357c5babb57503bace70bd66b7e1bb83bb6415d25989ab74e
+SHA512: 4289df1da62e5d5d8411422653444daf32313efd93c54ac4252d4000a0714eb3c0a703c382ea43843a3d224afc003b9c647321790f23e3ff41d7966d31e005ca
+Description: Solaris userland utility library for Linux
+ This library provides a variety of glue functions for ZFS on Linux:
+  * libspl: The Solaris Porting Layer userland library, which provides APIs
+    that make it possible to run Solaris user code in a Linux environment
+    with relatively minimal modification.
+  * libavl: The Adelson-Velskii Landis balanced binary tree manipulation
+    library.
+  * libefi: The Extensible Firmware Interface library for GUID disk
+    partitioning.
+  * libshare: NFS, SMB, and iSCSI service integration for ZFS.
+Homepage: https://zfsonlinux.org/
+
+Package: libzfs2linux
+Priority: optional
+Section: contrib/libs
+Installed-Size: 657
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Original-Maintainer: Debian ZFS on Linux maintainers <pkg-zfsonlinux-devel@alioth-lists.debian.net>
+Architecture: amd64
+Source: zfs-linux
+Version: 0.8.4-1terem4
+Replaces: libzfs2
+Depends: libblkid1 (>= 2.16), libc6 (>= 2.14), libnvpair1linux (>= 0.8.4), libssl1.1 (>= 1.1.0), libudev1 (>= 183), libuuid1 (>= 2.16), libuutil1linux (>= 0.8.4), zlib1g (>= 1:1.1.4)
+Breaks: libzfs2
+Filename: pool/main/z/zfs-linux/libzfs2linux_0.8.4-1terem4_amd64.deb
+Size: 233000
+MD5sum: ac6cf9267be5fa59420c92faf29c62ba
+SHA1: f0a01b5237f8e7ac6fbff69c2e39557aef9ac8c9
+SHA256: 66ad95a5c473e4582dad4bb3e131a6e37c16350345b6c3974090c4710e31ac94
+SHA512: e8670ab5a6b76168635a042957ce90b4464275a877858adc55a8f379e1b2cf90be8573a2eb6e46902358b4495ad26e536036018dbc018cb8c3ba5de3dfa19e53
+Description: OpenZFS filesystem library for Linux
+ The Z file system is a pooled filesystem designed for maximum data
+ integrity, supporting data snapshots, multiple copies, and data
+ checksums.
+ .
+ The OpenZFS library provides support for managing OpenZFS filesystems.
+Homepage: https://zfsonlinux.org/
+
+Package: libzfslinux-dev
+Priority: optional
+Section: contrib/libdevel
+Installed-Size: 9084
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Original-Maintainer: Debian ZFS on Linux maintainers <pkg-zfsonlinux-devel@alioth-lists.debian.net>
+Architecture: amd64
+Source: zfs-linux
+Version: 0.8.4-1terem4
+Provides: libnvpair-dev, libuutil-dev
+Depends: libnvpair1linux (= 0.8.4-1terem4), libuutil1linux (= 0.8.4-1terem4), libzfs2linux (= 0.8.4-1terem4), libzpool2linux (= 0.8.4-1terem4)
+Filename: pool/main/z/zfs-linux/libzfslinux-dev_0.8.4-1terem4_amd64.deb
+Size: 1420232
+MD5sum: 9b184dae724b9eb0e62ab4d1bd87e3b4
+SHA1: 6236f6386c8540c47d0f6984a152a895d5ba891b
+SHA256: 0654a459fe0a12f235cd79057858272366b66e84ad5c05534eb34c0da4109275
+SHA512: 4e462ddb75b549f5220b109a2719c445ab10a44c6904b6273c763c5da5e7fb1fb735672caf67eab652fd843993b89ef02957f7288a378445adfb4c91238d6583
+Description: OpenZFS filesystem development files for Linux
+ Header files and static libraries for compiling software against
+ libraries of OpenZFS filesystem.
+ .
+ This package includes the development files of libnvpair1, libuutil1,
+ libzpool2 and libzfs2.
+Homepage: https://zfsonlinux.org/
+
+Package: libzpool2linux
+Priority: optional
+Section: contrib/libs
+Installed-Size: 2899
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Original-Maintainer: Debian ZFS on Linux maintainers <pkg-zfsonlinux-devel@alioth-lists.debian.net>
+Architecture: amd64
+Source: zfs-linux
+Version: 0.8.4-1terem4
+Replaces: libzpool2
+Depends: libblkid1 (>= 2.16), libc6 (>= 2.14), libnvpair1linux (>= 0.8.4), libudev1 (>= 183), libuuid1 (>= 2.16), zlib1g (>= 1:1.1.4)
+Breaks: libzpool2
+Filename: pool/main/z/zfs-linux/libzpool2linux_0.8.4-1terem4_amd64.deb
+Size: 867556
+MD5sum: 4e122a06c2250e643e1b730f1497f6d4
+SHA1: 32473febc9ffdd20533e8039d9f1ee92c6e814ba
+SHA256: a333f27da96de55351eefee3423be4581fa78f285a0d7f639a0becfb14c900cc
+SHA512: e3edcbd5aa613348a0373b680414581be556731a9d1f428b1ca443c318026dd17d5cd481bf3992fcb001c6c9fc9cb77e1552a2a1a887d01b89c601847bbd8fe8
+Description: OpenZFS pool library for Linux
+ The Z file system is a pooled filesystem designed for maximum data
+ integrity, supporting data snapshots, multiple copies, and data
+ checksums.
+ .
+ This zpool library provides support for managing zpools.
+Homepage: https://zfsonlinux.org/
+
+Package: python3-pyzfs
+Priority: optional
+Section: contrib/python
+Installed-Size: 417
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Original-Maintainer: Debian ZFS on Linux maintainers <pkg-zfsonlinux-devel@alioth-lists.debian.net>
+Architecture: amd64
+Source: zfs-linux
+Version: 0.8.4-1terem4
+Depends: python3-cffi, zfsutils-linux (= 0.8.4-1terem4), python3-cffi-backend-api-min (<= 9729), python3-cffi-backend-api-max (>= 9729), python3:any (>= 3.3.2-2~)
+Filename: pool/main/z/zfs-linux/python3-pyzfs_0.8.4-1terem4_amd64.deb
+Size: 65832
+MD5sum: 94b6c866e8a61c76335f31fa1499ad87
+SHA1: 388ca74da650c4a9576bc9f321b4eb8c4e09dc3a
+SHA256: d582e943ad2e02263dd9a6170c385446a678333728c1a56a1bca17bd1730732b
+SHA512: 008dbb5a3814727a6d05df94a6a8d080d92745b8ab22b16eaf473efa07764b2204f6e6077fe2a073a69d605e372325115b24c313929cbf9ea5507b9dbfe27f99
+Description: wrapper for libzfs_core C library
+ libzfs_core is intended to be a stable interface for programmatic
+ administration of ZFS. This wrapper provides one-to-one wrappers for
+ libzfs_core API functions, but the signatures and types are more natural to
+ Python.
+ .
+ nvlists are wrapped as dictionaries or lists depending on their usage.
+ Some parameters have default values depending on typical use for
+ increased convenience. Enumerations and bit flags become strings and lists
+ of strings in Python. Errors are reported as exceptions rather than integer
+ errno-style error codes.  The wrapper takes care to provide one-to-many
+ mapping of the error codes to the exceptions by interpreting a context
+ in which the error code is produced.
+Homepage: https://zfsonlinux.org/
+
+Package: pyzfs-doc
+Priority: optional
+Section: contrib/doc
+Installed-Size: 383
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Original-Maintainer: Debian ZFS on Linux maintainers <pkg-zfsonlinux-devel@alioth-lists.debian.net>
+Architecture: all
+Source: zfs-linux
+Version: 0.8.4-1terem4
+Depends: libjs-sphinxdoc (>= 1.0)
+Recommends: python3-pyzfs
+Filename: pool/main/z/zfs-linux/pyzfs-doc_0.8.4-1terem4_all.deb
+Size: 56224
+MD5sum: 235c57060bb4d8d1d6acee3560abf032
+SHA1: fe1843c15646b60ea97f9f520d955a267c794205
+SHA256: 0148fd86b06fc5308ebb51dd98621998c2cd504f32bea02183c92d2fda95d7d2
+SHA512: afeb5508a22a8d01240eb8970b61caf45fd12d17b8e6cf41a2c6e930c308e278dc936b0c7934c53933dc85524dd6050c0db19f85d09bef443f25634accb094d2
+Description: wrapper for libzfs_core C library (documentation)
+ libzfs_core is intended to be a stable interface for programmatic
+ administration of ZFS. This wrapper provides one-to-one wrappers for
+ libzfs_core API functions, but the signatures and types are more natural to
+ Python.
+ .
+ nvlists are wrapped as dictionaries or lists depending on their usage.
+ Some parameters have default values depending on typical use for
+ increased convenience. Enumerations and bit flags become strings and lists
+ of strings in Python. Errors are reported as exceptions rather than integer
+ errno-style error codes.  The wrapper takes care to provide one-to-many
+ mapping of the error codes to the exceptions by interpreting a context
+ in which the error code is produced.
+ .
+ This package contains the documentation.
+Homepage: https://zfsonlinux.org/
+
+Package: spl
+Priority: optional
+Section: contrib/metapackages
+Installed-Size: 61
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Original-Maintainer: Debian ZFS on Linux maintainers <pkg-zfsonlinux-devel@alioth-lists.debian.net>
+Architecture: all
+Source: zfs-linux
+Version: 0.8.4-1terem4
+Suggests: zfs-test
+Filename: pool/main/z/zfs-linux/spl_0.8.4-1terem4_all.deb
+Size: 22672
+MD5sum: 6f5f4385cea9b55b3aa00c4551be2c50
+SHA1: 82f169299af5e6d9d48978dd6adbce5d07d0401b
+SHA256: f1b24f90296fd44c543e8df0433c8a1740404cc460a4a6bfa48cb8c7ae3eb157
+SHA512: d64f098ff42fe171a1763e5121829b261fe13a4910297f4e1abda30fd19ddb9d918ea0cfc13b16c35b42c343ca325c7e37410c36f7f260fc009b683a97ef808c
+Description: Solaris Porting Layer user-space utilities for Linux (dummy)
+ The Solaris Porting Layer (SPL) is a Linux kernel module which provides
+ many of the Solaris kernel APIs. This shim layer makes it possible to
+ run Solaris kernel code in the Linux kernel with relatively minimal
+ modification. The Solaris Porting LAyer Tests (SPLAT) is a Linux kernel
+ module which provides a testing harness for the SPL module.
+ .
+ SPL can be particularly useful when you want to track upstream Illumos
+ (or any other OpenSolaris fork) development closely and don't want the
+ overhead of maintaining a large patch which converts Solaris primitives
+ to Linux primitives.
+ .
+ This is a transitional dummy package. It can safely be removed.
+Homepage: https://zfsonlinux.org/
+
+Package: spl-dkms
+Priority: optional
+Section: contrib/metapackages
+Installed-Size: 61
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Original-Maintainer: Debian ZFS on Linux maintainers <pkg-zfsonlinux-devel@alioth-lists.debian.net>
+Architecture: all
+Source: zfs-linux
+Version: 0.8.4-1terem4
+Depends: zfs-dkms
+Filename: pool/main/z/zfs-linux/spl-dkms_0.8.4-1terem4_all.deb
+Size: 22688
+MD5sum: 783fbf01eb49062765e3610be3111be8
+SHA1: 0fec112a346baa03383b4c4c70f86739c7be9443
+SHA256: 83add0879284ab109db833525ac790212b092c420ee0a257c94cd74d3964190c
+SHA512: 8c8a22079e2934e5bf33f21853272e89e69aa5c0b64d78fb04a46caa78df8296d317d3e7ac62a625c07ab48ee1b7b40c1c1ab18be2a26ea524cfd3436742e09a
+Description: Solaris Porting Layer kernel modules for Linux (dummy)
+ The Solaris Porting Layer (SPL) is a Linux kernel module which provides
+ many of the Solaris kernel APIs. This shim layer makes it possible to
+ run Solaris kernel code in the Linux kernel with relatively minimal
+ modification. The Solaris Porting LAyer Tests (SPLAT) is a Linux kernel
+ module which provides a testing harness for the SPL module.
+ .
+ SPL can be particularly useful when you want to track upstream Illumos
+ (or any other OpenSolaris fork) development closely and don't want the
+ overhead of maintaining a large patch which converts Solaris primitives
+ to Linux primitives.
+ .
+ This is a transitional dummy package. It can safely be removed.
+ SPL dkms files had been merged into zfs-dkms as of ZFS 0.8.X series.
+Homepage: https://zfsonlinux.org/
+
+Package: zfs-dkms
+Priority: optional
+Section: contrib/kernel
+Installed-Size: 15528
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Original-Maintainer: Debian ZFS on Linux maintainers <pkg-zfsonlinux-devel@alioth-lists.debian.net>
+Architecture: all
+Source: zfs-linux
+Version: 0.8.4-1terem4
+Replaces: spl-dkms
+Provides: zfs-modules
+Depends: dkms (>> 2.1.1.2-5), file, libc6-dev | libc-dev, lsb-release, python3-distutils | libpython3-stdlib (<< 3.6.4), debconf (>= 0.5) | debconf-2.0, perl:any
+Recommends: zfs-zed, zfsutils-linux (>= 0.8.4-1terem4), linux-libc-dev (<< 5.7~), linux-libc-dev (>= 3.10~)
+Suggests: debhelper
+Breaks: spl-dkms (<< 0.8.0~rc1)
+Filename: pool/main/z/zfs-linux/zfs-dkms_0.8.4-1terem4_all.deb
+Size: 2039952
+MD5sum: 501f56186b342cc55b15faef5a3c2703
+SHA1: ca3a2fdda9e8a0d7ab4693b772f5b9072c46b91f
+SHA256: 7b24ca0c5813aa9d6edfae297871d04cdd34468504dd6f407f0b589835966a56
+SHA512: a741495deca363e5906d4eb864a183c29b36be0117d96acdbfb2c84c911b1cd32e7608e3282f2937f914eda6aea603f93506a412c5f645126bb3f67d7233671f
+Description: OpenZFS filesystem kernel modules for Linux
+ The Z file system is a pooled filesystem designed for maximum data
+ integrity, supporting data snapshots, multiple copies, and data
+ checksums.
+ .
+ This DKMS package includes the SPA, DMU, ZVOL, and ZPL components of
+ OpenZFS.
+Homepage: https://zfsonlinux.org/
+
+Package: zfs-dracut
+Priority: optional
+Section: contrib/kernel
+Installed-Size: 93
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Original-Maintainer: Debian ZFS on Linux maintainers <pkg-zfsonlinux-devel@alioth-lists.debian.net>
+Architecture: amd64
+Source: zfs-linux
+Version: 0.8.4-1terem4
+Depends: dracut, zfsutils-linux (>= 0.8.4-1terem4)
+Filename: pool/main/z/zfs-linux/zfs-dracut_0.8.4-1terem4_amd64.deb
+Size: 29852
+MD5sum: 2ddfa2cb0c6724a652f0aa6f01a172d3
+SHA1: 5f5e1a6e26563d0ead47dd247f7f61d24f984a35
+SHA256: d311b8bcb7dcd035a8e19a88b0d02042261241bdf7dd10fe13db1af1e1987ffc
+SHA512: 7b57ab83409fd416bc0163cdef7627d23afa017727f8c1d2e7bee2fbf25084b9e9f88bcc1c27e58009d45a8ec449621cb12a1827d50b7c2a61123e339faaee85
+Description: OpenZFS root filesystem capabilities for Linux - dracut
+ The Z file system is a pooled filesystem designed for maximum data
+ integrity, supporting data snapshots, multiple copies, and data
+ checksums.
+ .
+ This package adds OpenZFS to the system initramfs with a hook
+ for the dracut infrastructure.
+Homepage: https://zfsonlinux.org/
+
+Package: zfs-initramfs
+Priority: optional
+Section: contrib/kernel
+Installed-Size: 108
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Original-Maintainer: Debian ZFS on Linux maintainers <pkg-zfsonlinux-devel@alioth-lists.debian.net>
+Architecture: amd64
+Source: zfs-linux
+Version: 0.8.4-1terem4
+Replaces: zfsutils-linux (<= 0.7.11-2)
+Depends: busybox-initramfs | busybox-static | busybox, initramfs-tools, zfsutils-linux (>= 0.8.4-1terem4)
+Breaks: zfsutils-linux (<= 0.7.11-2)
+Filename: pool/main/z/zfs-linux/zfs-initramfs_0.8.4-1terem4_amd64.deb
+Size: 33100
+MD5sum: 8f93fb2aa192a70d0ef834ca205eb836
+SHA1: 10b0cef3c3744dde817eac00711593312230a37d
+SHA256: 209640ba70651951062aa8a4557ca184c7df5e2c41cc52feacbe13a8c1acc7e9
+SHA512: 2a1b2d26f49257e8836eec472b1884365b657531bc6598831de1b02b7a453853ac14882e2e1490899a53f000b89b048bed4209c56c1f9985df69d5164798f46b
+Description: OpenZFS root filesystem capabilities for Linux - initramfs
+ The Z file system is a pooled filesystem designed for maximum data
+ integrity, supporting data snapshots, multiple copies, and data
+ checksums.
+ .
+ This package adds OpenZFS to the system initramfs with a hook
+ for the initramfs-tools infrastructure.
+Homepage: https://zfsonlinux.org/
+
+Package: zfs-test
+Priority: optional
+Section: contrib/admin
+Installed-Size: 10532
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Original-Maintainer: Debian ZFS on Linux maintainers <pkg-zfsonlinux-devel@alioth-lists.debian.net>
+Architecture: amd64
+Source: zfs-linux
+Version: 0.8.4-1terem4
+Replaces: zfsutils-linux (<= 0.7.9-2)
+Depends: acl, bc, fio, ksh, lsscsi, mdadm, parted, python3, python3-pyzfs, sudo, sysstat, zfsutils-linux (>= 0.8.4-1terem4), libaio1 (>= 0.3.93), libc6 (>= 2.17), libnvpair1linux (>= 0.8.4), libudev1 (>= 183), libzfs2linux (>= 0.8.4), libzpool2linux (>= 0.8.4)
+Conflicts: zutils
+Breaks: zfsutils-linux (<= 0.7.9-2)
+Filename: pool/main/z/zfs-linux/zfs-test_0.8.4-1terem4_amd64.deb
+Size: 5341976
+MD5sum: d542ed74b8c78c7927dbcc046e929ffc
+SHA1: f2b31f701c3618c1b1869fae661f30c0b43ba25e
+SHA256: 19077ab87ecfd5a45b97ca21c73970f596411f6b8ac945ed7ae5710d585aa605
+SHA512: d6a944b2a1208392cc6f59a1fca00899d7ab0fb55d86f50a21488b67f636c8105610cf351a89bd3e2e22710e70ba960d4dcbd26ddd66cc2e8e5946575872e8b4
+Description: OpenZFS test infrastructure and support scripts
+ The Z file system is a pooled filesystem designed for maximum data
+ integrity, supporting data snapshots, multiple copies, and data
+ checksums.
+ .
+ This package provides the OpenZFS test infrastructure for destructively
+ testing and validating a system using OpenZFS. It is entirely optional
+ and should only be installed and used in test environments.
+Homepage: https://zfsonlinux.org/
+
+Package: zfs-zed
+Priority: optional
+Section: contrib/admin
+Installed-Size: 245
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Original-Maintainer: Debian ZFS on Linux maintainers <pkg-zfsonlinux-devel@alioth-lists.debian.net>
+Architecture: amd64
+Source: zfs-linux
+Version: 0.8.4-1terem4
+Depends: zfsutils-linux (>= 0.8.4-1terem4), libc6 (>= 2.14), libnvpair1linux (>= 0.8.4), libudev1 (>= 183), libuuid1 (>= 2.16), libuutil1linux (>= 0.8.4), libzfs2linux (>= 0.8.4)
+Filename: pool/main/z/zfs-linux/zfs-zed_0.8.4-1terem4_amd64.deb
+Size: 69128
+MD5sum: 755b11888c282f10292009c34fe7acb9
+SHA1: 90cc90d5ae8d195aa745cef1394f72e1dabc9300
+SHA256: 7334898a79d401c13b665cbec7567a71768b4753bb8e26306c49f80681f72a63
+SHA512: 17ee3af54277c90be9cee8a17e8fdb2b811c2faa8d600fcfdf1e5e0ab41e4bb7506198d18a00e7e4be1a368598953f567bf87617a53c9c00aa4a49a8bcd4bd98
+Description: OpenZFS Event Daemon
+ The Z file system is a pooled filesystem designed for maximum data
+ integrity, supporting data snapshots, multiple copies, and data
+ checksums.
+ .
+ This package provides the OpenZFS Event Daemon (zed).
+Homepage: https://zfsonlinux.org/
+
+Package: zfsutils-linux
+Priority: optional
+Section: contrib/admin
+Installed-Size: 1389
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Original-Maintainer: Debian ZFS on Linux maintainers <pkg-zfsonlinux-devel@alioth-lists.debian.net>
+Architecture: amd64
+Source: zfs-linux
+Version: 0.8.4-1terem4
+Replaces: spl (<< 0.7.9-2), spl-dkms
+Provides: zfsutils
+Depends: libnvpair1linux (= 0.8.4-1terem4), libuutil1linux (= 0.8.4-1terem4), libzfs2linux (= 0.8.4-1terem4), libzpool2linux (= 0.8.4-1terem4), python3, libblkid1 (>= 2.16), libc6 (>= 2.17), libuuid1 (>= 2.16)
+Recommends: lsb-base, zfs-zed
+Suggests: nfs-kernel-server, samba-common-bin (>= 3.0.23), zfs-initramfs | zfs-dracut
+Conflicts: zfs, zfs-fuse
+Breaks: openrc, spl (<< 0.7.9-2), spl-dkms (<< 0.8.0~rc1), zfs-dkms (>> 0.8.4-1terem4), zfs-dkms (<< 0.8.4-1terem4)
+Filename: pool/main/z/zfs-linux/zfsutils-linux_0.8.4-1terem4_amd64.deb
+Size: 461188
+MD5sum: 1d29ac9d0d79a9fcc6e0992e014240f6
+SHA1: 166c3cc62ae6f38a38d1af3b054871328064ac8a
+SHA256: 5a1aa3c5fa066c784664b54608ead22532e737067e5c3c2707c65cacbd4f817c
+SHA512: 6411f732f9095f4f7d32f2d5f70f2f9ac40f9e6752b192139ab48bf7c47d6839267ad42fdb2a54a4a74e2a63bc1f43ba04403beca8fdf9609d5b86bd3a49b4ac
+Description: command-line tools to manage OpenZFS filesystems
+ The Z file system is a pooled filesystem designed for maximum data
+ integrity, supporting data snapshots, multiple copies, and data
+ checksums.
+ .
+ This package provides the zfs and zpool commands to create and administer
+ OpenZFS filesystems.
+Homepage: https://zfsonlinux.org/
+
