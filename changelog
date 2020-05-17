@@ -1,5 +1,6 @@
 zfs-linux (0.8.4-1terem4) zfs-debian-experimental; urgency=medium
 
+  * updated upstream openzfs/zfs master commit to c51a13433c6
   * added terem 004 patch 
     based on 10278 github.com/openyfs/zfs pull request
   * updated terem 0003 patch
