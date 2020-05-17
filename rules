@@ -97,8 +97,8 @@ override_dh_auto_install:
 	install -D -t '$(CURDIR)/debian/tmp/usr/src/$(NAME)-$(DEB_VERSION_UPSTREAM)/scripts' \
 		'$(CURDIR)/scripts/enum-extract.pl' \
 		'$(CURDIR)/scripts/dkms.postbuild'
-	mkdir -p '$(CURDIR)/debian/tmp/usr/src/$(NAME)-$(DEB_VERSION_UPSTREAM)/contrib/'
-	mv '$(CURDIR)/$(NAME)-$(DEB_VERSION_UPSTREAM)/contrib/zstd' '$(CURDIR)/debian/tmp/usr/src/$(NAME)-$(DEB_VERSION_UPSTREAM)/contrib/'
+	#mkdir -p '$(CURDIR)/debian/tmp/usr/src/$(NAME)-$(DEB_VERSION_UPSTREAM)/contrib/'
+	#mv '$(CURDIR)/$(NAME)-$(DEB_VERSION_UPSTREAM)/contrib/zstd' '$(CURDIR)/debian/tmp/usr/src/$(NAME)-$(DEB_VERSION_UPSTREAM)/contrib/'
 	$(foreach file,$(DKMSFILES),mv '$(CURDIR)/$(NAME)-$(DEB_VERSION_UPSTREAM)/$(file)' '$(CURDIR)/debian/tmp/usr/src/$(NAME)-$(DEB_VERSION_UPSTREAM)' || exit 1;)
 	@# Hellish awk line:
 	@#  * Deletes from configure.ac the parts not needed for building the kernel module
