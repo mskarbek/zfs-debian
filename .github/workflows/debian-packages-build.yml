@@ -16,7 +16,7 @@ jobs:
           mkdir ~/zfs && cd ~/zfs
           git init
           git fetch https://github.com/openzfs/zfs.git refs/heads/master
-          git checkout 6ed4391da97a1d183dbabcbe667026deb6678612
+          git checkout master
       - name: clone our zfs ubuntu repo
         shell: bash
         run: |
